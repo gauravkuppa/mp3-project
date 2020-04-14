@@ -1,0 +1,30 @@
+{
+    "files.associations": {
+        "periodic_scheduler.h": "c",
+        "stdio.h": "c",
+        "pwm1.h": "c",
+        "gpio_lab.h": "c",
+        "lpc_peripherals.h": "c",
+        "stdint.h": "c",
+        "ssp1.h": "c",
+        "stdlib.h": "c",
+        "uart.h": "c",
+        "functional": "c",
+        "cstddef": "c",
+        "*.cuh": "c",
+        "ff.h": "c",
+        "gpio.h": "c",
+        "i2c_slave_init.h": "c",
+        "ctime": "cpp",
+        "chrono": "cpp",
+        "condition_variable": "cpp",
+        "mutex": "cpp",
+        "thread": "cpp",
+        "freertos.h": "c",
+        "i2c.h": "c",
+        "cli_handlers.h": "c",
+        "typeindex": "c",
+        "typeinfo": "c"
+    },
+    "python.formatting.provider": "black"
+}
