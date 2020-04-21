@@ -515,11 +515,14 @@ bool i2c_slave_callback__read_memory(uint8_t memory_index, uint8_t *memory) {
   // TODO: Read the data from slave_memory[memory_index] to *memory pointer
   // TODO: return true if all is well (memory index is within bounds)
   bool status = true;
+
   // LPC_I2C2->ADRO0 |= memory_index;
   *memory = slave_memory[memory_index];
+
   if (LPC_I2C2->STAT == 0x78 || LPC_I2C2->STAT == 0xB0) {
     status = false;
   }
+
   return status;
 }
 
@@ -527,10 +530,13 @@ bool i2c_slave_callback__write_memory(uint8_t memory_index, uint8_t memory_value
   // TODO: Write the memory_value at slave_memory[memory_index]
   // TODO: return true if memory_index is within bounds
   bool status = true;
+
   slave_memory[memory_index] = memory_value;
+
   if (LPC_I2C2->STAT == 0x78 || LPC_I2C2->STAT == 0xB0) {
     status = false;
   }
+
   return status;
 }
 
@@ -541,6 +547,7 @@ void uart_read_task(void *p) {
 
     char *val;
     bool get = uart_lab__polled_get(UART_2, &val);
+
     // fprintf(stderr, "bool get: %d\n", get);
     fprintf(stderr, "get char %x\n", val);
     vTaskDelay(500);
@@ -549,39 +556,50 @@ void uart_read_task(void *p) {
 
 // Reader tasks receives song-name over Q_songname to start reading it(sending it into the queue for player to recieve)
 void mp3_reader_task(void *p) {
-  mp3_data_blocks mp3_data_block;
   printf("in\n");
+
+  mp3_data_blocks mp3_data_block;
   songname_t name;
   char bytes_512[512];
 
   while (1) {
     printf("in while\n");
-    if (xQueueReceive(Q_songname, &name[0], portMAX_DELAY)) {
 
+    if (xQueueReceive(Q_songname, &name[0], portMAX_DELAY)) {
       printf("Received song to play: %s\n", name);
+
       const char *filename = &name;
       uint8_t counter = 0;
       FIL file;
       UINT bytes_written = 0;
+
       FRESULT result = f_open(&file, filename, (FA_READ));
+
       if (result == FR_OK) {
+
         while (!f_eof(&file)) {
           printf("About to read\n");
+
           memset(bytes_512, 0, sizeof(bytes_512));
+
           if (FR_OK == f_read(&file, mp3_data_block, sizeof(mp3_data_block), &bytes_written)) {
             printf("read file %x\n", &mp3_data_block[0]);
+
             printf("about to send");
             xQueueSend(Q_songdata, mp3_data_block[0], portMAX_DELAY);
             // printf("%x", mp3_data_block); // testing print
             vTaskDelay(300);
+
             if (xQueueReceive(Q_songname, &name[0], 0)) {
               break;
             }
-          } else {
+          } 
+          else {
             printf("Error: Failed to read");
           }
         }
-      } else {
+      } 
+      else {
         printf("Error: Failed to open file");
       }
 
@@ -592,21 +610,28 @@ void mp3_reader_task(void *p) {
 
 // Player task receives song data over Q_songdata to send it to the MP3 decoder
 void mp3_player_task(void *p) {
+
   mp3_data_blocks mp3_data_block;
   // char bytes_512[512];
+
   while (1) {
+
     if (xQueueReceive(Q_songdata, &mp3_data_block[0], portMAX_DELAY)) {
       printf("recieved song data\n");
+
       for (int i = 0; i < sizeof(mp3_data_block); i++) {
+
         if (0) {
           vTaskDelay(1);
         }
         // printf("output: %s ", c);
         // if (i > 2 && i < 33) {
+
         printf("%x", *(mp3_data_block + i));
         // }
         // spi_send_to_mp3_decoder(bytes_512[i]);
       }
+
       printf("out\n");
     }
   }
@@ -644,9 +669,12 @@ int main(void) {
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, 512);
+
   xTaskCreate(mp3_reader_task, "reader", (4000) / sizeof(void *), NULL, 1, NULL);
   xTaskCreate(mp3_player_task, "player", (4000) / sizeof(void *), NULL, 2, NULL);
+
   vTaskStartScheduler();
+
   return -1;
 }
 
@@ -654,13 +682,17 @@ void write_file_using_fatfs_pi(bool inTime, char *input) {
   const char *filename = "logging.txt";
   FIL file; // File handle
   UINT bytes_written = 0;
-  FRESULT result = f_open(&file, filename, (FA_OPEN_APPEND | FA_WRITE));
   FILINFO fno;
 
+  FRESULT result = f_open(&file, filename, (FA_OPEN_APPEND | FA_WRITE));
+
   if (FR_OK == result) {
+
     char string[128];
+
     if (inTime == true) {
       printf("in and input: %s\n", input);
+
       char time_data[32];
       /**time_t rawtime;
       struct tm *info;
@@ -684,18 +716,21 @@ void write_file_using_fatfs_pi(bool inTime, char *input) {
       printf("true\n");
       // sprintf(string, "%s", input);
 
-    } else {
+    } 
+    else {
       fprintf(stderr, "false\n");
       sprintf(string, "%s", input);
     }
     printf("out");
     if (FR_OK == f_write(&file, string, strlen(string), &bytes_written)) {
       // printf("sent");
-    } else {
+    } 
+    else {
       printf("ERROR: Failed to write data to file\n");
     }
     f_close(&file);
-  } else {
+  } 
+  else {
     printf("ERROR: Failed to open: %s because %d\n", filename, result);
   }
 }
@@ -704,18 +739,24 @@ void write_file_using_fatfs_pi_1(char *sensor_value) {
   const char *filename = "logging.txt";
   FIL file; // File handle
   UINT bytes_written = 0;
+
   FRESULT result = f_open(&file, filename, (FA_OPEN_APPEND | FA_WRITE));
   fprintf(stderr, "in write: %s\n", sensor_value);
+
   if (FR_OK == result) {
+
     char string[64];
     sprintf(string, "%li, %s\n", xTaskGetTickCount(), sensor_value);
+
     if (FR_OK == f_write(&file, string, strlen(string), &bytes_written)) {
       // printf("sent");
-    } else {
+    } 
+    else {
       printf("ERROR: Failed to write data to file\n");
     }
     f_close(&file);
-  } else {
+  } 
+  else {
     printf("ERROR: Failed to open: %s because %d\n", filename, result);
   }
 }
