@@ -27,6 +27,7 @@ uint8_t ssp__exchange_byte(uint8_t byte_to_transmit);
  * @name    Exchanges larger blocks over the SPI bus
  * These are designed to be one-way transmission for the SPI for now
  */
-void ssp__dma_write_block(const unsigned char *output_block, size_t number_of_bytes);
+void ssp__dma_write_block(const unsigned char *output_block,
+                          size_t number_of_bytes);
 void ssp__dma_read_block(unsigned char *input_block, size_t number_of_bytes);
 /** @} */

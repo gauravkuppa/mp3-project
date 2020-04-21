@@ -7,17 +7,20 @@
 /**
  * @file
  * This file provides API to turn on peripheral power, and their interrupts
- * Turning off power and disabling interrupts is a YAGNI so do not be suprised of the omission
+ * Turning off power and disabling interrupts is a YAGNI so do not be suprised
+ * of the omission
  */
 
 /**
  * These enum values map to the interrupt vector table
  * Check UM10562.pdf, Chapter 5: NVIC
  *
- * @note If you add more peripherals here, you will have to modify lpc_peripherals.c too
+ * @note If you add more peripherals here, you will have to modify
+ * lpc_peripherals.c too
  *
- * @warning these need to map to the same values as lpc40xx.h 'IRQn_Type'; we duplicate it
- *          here to avoid including lpc40xx.h and make unit-testing and mocking easier.
+ * @warning these need to map to the same values as lpc40xx.h 'IRQn_Type'; we
+ * duplicate it here to avoid including lpc40xx.h and make unit-testing and
+ * mocking easier.
  */
 typedef enum {
   LPC_PERIPHERAL__TIMER0 = 1,
@@ -48,4 +51,5 @@ typedef enum {
 void lpc_peripheral__turn_on_power_to(lpc_peripheral_e peripheral);
 bool lpc_peripheral__is_powered_on(lpc_peripheral_e peripheral);
 
-void lpc_peripheral__enable_interrupt(lpc_peripheral_e peripheral, function__void_f isr_callback);
+void lpc_peripheral__enable_interrupt(lpc_peripheral_e peripheral,
+                                      function__void_f isr_callback);

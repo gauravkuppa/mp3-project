@@ -4,9 +4,9 @@
 #include "gpio.h"
 
 /******************************************************************************
- * Your board will reset if the periodic function does not return within its deadline
- * For 1Hz, the function must return within 1000ms
- * For 1000Hz, the function must return within 1ms
+ * Your board will reset if the periodic function does not return within its
+ * deadline For 1Hz, the function must return within 1000ms For 1000Hz, the
+ * function must return within 1ms
  */
 void periodic_callbacks__initialize(void) {
   // This method is invoked once when the periodic tasks are created

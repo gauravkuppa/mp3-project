@@ -29,7 +29,8 @@ void ssp__init(uint32_t max_clock_mhz) {
 // fprintf(stderr, "%d", cvpdsr);
 
 uint8_t ssp__exchange_byte(uint8_t byte_to_transmit) {
-  // Configure the Data register(DR) to send and receive data by checking the status register
+  // Configure the Data register(DR) to send and receive data by checking the
+  // status register
   LPC_SSP2->DR = byte_to_transmit;
   while (LPC_SSP2->SR & (1 << 4)) {
     ;

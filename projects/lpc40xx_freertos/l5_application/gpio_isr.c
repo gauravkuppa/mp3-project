@@ -4,10 +4,12 @@
 #include "uart_printf.h"
 #include <stdint.h>
 #include <stdio.h>
-// Note: You may want another separate array for falling vs. rising edge callbacks
+// Note: You may want another separate array for falling vs. rising edge
+// callbacks
 static function_pointer_t gpio0_callbacks[32];
 
-void gpio0__attach_interrupt(uint32_t pin, gpio_interrupt_e interrupt_type, function_pointer_t callback) {
+void gpio0__attach_interrupt(uint32_t pin, gpio_interrupt_e interrupt_type,
+                             function_pointer_t callback) {
   // 1) Store the callback based on the pin at gpio0_callbacks
   // 2) Configure GPIO 0 pin for rising or falling edge
   gpio0_callbacks[pin] = callback;
@@ -45,7 +47,8 @@ void gpio0__interrupt_dispatcher(void) {
   gpioN__set_as_input(0, pin_that_generated_interrupt);
   uart_printf__polled(UART__0, "%d", pin_that_generated_interrupt);
 
-  function_pointer_t attached_user_handler = gpio0_callbacks[pin_that_generated_interrupt];
+  function_pointer_t attached_user_handler =
+      gpio0_callbacks[pin_that_generated_interrupt];
   // uart_printf__polled(UART__0, "callback port 0\n");
 
   // Invoke the user registered callback, and then clear the interrupt

@@ -68,7 +68,8 @@ typedef struct {
   /* First get gpio0 driver to work only, and if you finish20001b70
 
 void led_task(void *pvParameters) {
-  // Choose one of the onboard LEDS by looking into schematics and write code for the below
+  // Choose one of the onboard LEDS by looking into schematics and write code
+for the below
 
   // 0) Set the IOCON MUX function select pins to 000
   *(uint32_t *)(0x4002C0E8) &= ~(0b111);
@@ -131,8 +132,9 @@ void led_task_any_sempahores(void *task_parameter) {
   gpioN__set_as_output(port_num, pin_num);
 
   while (true) {
-    // Note: There is no vTaskDelay() here, but we use sleep mechanism while waiting for the binary semaphore (signal)
-    if (xSemaphoreTake(switch_press_indication, 1000)) {
+    // Note: There is no vTaskDelay() here, but we use sleep mechanism while
+waiting for the binary semaphore (signal) if
+(xSemaphoreTake(switch_press_indication, 1000)) {
 
       gpioN__set_low(port_num, pin_num);
       vTaskDelay(500);
@@ -169,20 +171,24 @@ void adc_task(void *p) {
   // You can configure burst mode for just the channel you are using
   adc__enable_burst_mode();
 
-  // Configure a pin, such as P1.31 with FUNC 011 to route this pin as ADC channel 5
+  // Configure a pin, such as P1.31 with FUNC 011 to route this pin as ADC
+channel 5
   // You can use gpio__construct_with_function() API from gpio.h
   pin_configure_adc_channel_as_io_pin(); // TODO You need to write this function
 
   while (1) {
-    // Get the ADC reading using a new routine you created to read an ADC burst reading
+    // Get the ADC reading using a new routine you created to read an ADC burst
+reading
     // TODO: You need to write the implementation of this function
-    const uint16_t adc_value = adc__get_channel_reading_with_burst_mode(ADC__CHANNEL_2);
+    const uint16_t adc_value =
+adc__get_channel_reading_with_burst_mode(ADC__CHANNEL_2);
 
     vTaskDelay(100);
   }
 }
 **/
-// which pins will be damaged if one of the damaged if one of the lines is low? MISO
+// which pins will be damaged if one of the damaged if one of the lines is low?
+// MISO
 // TODO: Implement Adesto flash memory CS signal as a GPIO driver
 /**void adesto_cs(void) {
   LPC_GPIO1->PIN &= ~(1 << 10);
@@ -220,8 +226,9 @@ adesto_flash_id_s adesto_read_signature(void) {
   data.device_id_1 = ssp__exchange_byte(0xff);
   data.device_id_2 = ssp__exchange_byte(0xff);
   data.extended_device_id = ssp__exchange_byte(0xff);
-  printf("\nManufacturer ID: %x\nDevice ID 1: %x\nDevice ID 2: %x\nExtended Device ID: %x", data.manufacturer_id,
-         data.device_id_1, data.device_id_2, data.extended_device_id);
+  printf("\nManufacturer ID: %x\nDevice ID 1: %x\nDevice ID 2: %x\nExtended
+Device ID: %x", data.manufacturer_id, data.device_id_1, data.device_id_2,
+data.extended_device_id);
 
   adesto_ds();
 
@@ -232,9 +239,9 @@ adesto_flash_id_s adesto_read_signature(void) {
 todo_configure_your_ssp1_pin_functions() {
 
   gpio__construct_with_function(GPIO__PORT_1, 0, GPIO__FUNCTION_4); // SSP2, SCK
-  gpio__construct_with_function(GPIO__PORT_1, 4, GPIO__FUNCTION_4); // SSP2, MISO
-  gpio__construct_with_function(GPIO__PORT_1, 1, GPIO__FUNCTION_4); // SSP2, MOSI
-  gpioN__set_as_output(1, 10);
+  gpio__construct_with_function(GPIO__PORT_1, 4, GPIO__FUNCTION_4); // SSP2,
+MISO gpio__construct_with_function(GPIO__PORT_1, 1, GPIO__FUNCTION_4); // SSP2,
+MOSI gpioN__set_as_output(1, 10);
 }
 
 void spi_task(void *p) {
@@ -244,7 +251,8 @@ void spi_task(void *p) {
   ssp__init(spi_clock_mhz);
 
   // From the LPC schematics pdf, find the pin numbers connected to flash memory
-  // Read table 84 from LPC User Manual and configure PIN functions for SPI2 pins
+  // Read table 84 from LPC User Manual and configure PIN functions for SPI2
+pins
   // You can use gpio__construct_with_function() API from gpio.h
   //
   // Note: Configure only SCK2, MOSI2, MISO2.
@@ -254,9 +262,9 @@ void spi_task(void *p) {
   while (1) {
     adesto_flash_id_s id = adesto_read_signature();
     // TODO: printf the members of the 'adesto_flash_id_s' struct
-    printf("\nManufacturer ID: %x\nDevice ID 1: %x\nDevice ID 2: %x\nExtended Device ID: %x", id.manufacturer_id,
-           id.device_id_1, id.device_id_2, id.extended_device_id);
-    vTaskDelay(500);
+    printf("\nManufacturer ID: %x\nDevice ID 1: %x\nDevice ID 2: %x\nExtended
+Device ID: %x", id.manufacturer_id, id.device_id_1, id.device_id_2,
+id.extended_device_id); vTaskDelay(500);
   }
 }
 void spi_id_verification_task(void *p) {
@@ -305,8 +313,8 @@ void board_1_sender_task(void *p) {
     const int number = rand();
     sprintf(number_as_string, "%i", number);
 
-    // Send one char at a time to the other board including terminating NULL char
-    for (int i = 0; i <= strlen(number_as_string); i++) {
+    // Send one char at a time to the other board including terminating NULL
+char for (int i = 0; i <= strlen(number_as_string); i++) {
       uart_lab__polled_put(0, number_as_string[i]);
       printf("Sent: %c\n", number_as_string[i]);
     }
@@ -370,7 +378,8 @@ void mp3_player_task(void *p) {
     if ('\0' == byte) {
       number_as_string[counter] = '\0';
       counter = 0;
-      printf("Received this number from the other board: %s\n", number_as_string);
+      printf("Received this number from the other board: %s\n",
+number_as_string);
     }
     // We have not yet received the NULL '\0' char, so buffer the data
     else {
@@ -380,7 +389,8 @@ void mp3_player_task(void *p) {
       else
         counter = 0;
       // TODO: Store data to number_as_string[] array one char at a time
-      // Hint: Use counter as an index, and increment it as long as we do not reach max value of 16
+      // Hint: Use counter as an index, and increment it as long as we do not
+reach max value of 16
     }
   }
 }**/
@@ -391,8 +401,10 @@ void mp3_player_task(void *p) {
 void producer(void *p) {
   switch_e switch_value = 0;
   while (1) {
-    // This xQueueSend() will internally switch context to "consumer" task because it is higher priority than this
-    // "producer" task Then, when the consumer task sleeps, we will resume out of xQueueSend()and go over to the next
+    // This xQueueSend() will internally switch context to "consumer" task
+because it is higher priority than this
+    // "producer" task Then, when the consumer task sleeps, we will resume out
+of xQueueSend()and go over to the next
     // line
 
     // TODO:
@@ -401,8 +413,8 @@ void producer(void *p) {
 
     // TODO: Print a message before xQueueSend()
     printf("Sending...%d\n", switch_value);
-    // Note: Use printf() and not fprintf(stderr, ...) because stderr is a polling printf
-    xQueueSend(switch_queue, &switch_value, 0);
+    // Note: Use printf() and not fprintf(stderr, ...) because stderr is a
+polling printf xQueueSend(switch_queue, &switch_value, 0);
     // TODO: Print a message after xQueueSend()
     printf("Sent!\n");
 
@@ -433,8 +445,9 @@ void write_file_using_fatfs_pi(acceleration__axis_data_s *sensor_value) {
 
   if (FR_OK == result) {extern QueueHandle_t Q_songname;
     char string[64];
-    sprintf(string, "%li, %i, %i, %i\n", xTaskGetTickCount(), sensor_value->x, sensor_value->y, sensor_value->z);
-    if (FR_OK == f_write(&file, string, strlen(string), &bytes_written)) {
+    sprintf(string, "%li, %i, %i, %i\n", xTaskGetTickCount(), sensor_value->x,
+sensor_value->y, sensor_value->z); if (FR_OK == f_write(&file, string,
+strlen(string), &bytes_written)) {
       // printf("sent");
     } else {
       printf("ERROR: Failed to write data to file\n");
@@ -449,7 +462,8 @@ void producer_task(void *params) {
   while (1) { // Assume 100ms loop - vTaskDelay(100)
     // Sample code:
 
-    // fprintf(stderr, "Send Acceleration x: %d, y: %d, z: %d\n", sensor_value.x, sensor_value.y, sensor_value.z);
+    // fprintf(stderr, "Send Acceleration x: %d, y: %d, z: %d\n",
+sensor_value.x, sensor_value.y, sensor_value.z);
 
     acceleration__axis_data_s calculated_avg;
     for (int i = 0; i < 100; i++) {
@@ -471,12 +485,13 @@ void producer_task(void *params) {
 
 void consumer_task(void *params) {
   while (1) { // Assume 100ms loop
-    // No need to use vTaskDelay() because the consumer will consume as fast as production rate
+    // No need to use vTaskDelay() because the consumer will consume as fast as
+production rate
     // because we should block on xQueueReceive(&handle, &item, portMAX_DELAY);
     // Sample code:
     acceleration__axis_data_s sensor_value;
-    xQueueReceive(sensor_data_queue, &sensor_value, 100); // Wait forever for an item
-    write_file_using_fatfs_pi(&sensor_value);
+    xQueueReceive(sensor_data_queue, &sensor_value, 100); // Wait forever for an
+item write_file_using_fatfs_pi(&sensor_value);
     // fprintf(stderr, "Receive Acceleration );
     uxBits = xEventGroupSetBits(xEventGroup, BIT_2);
   }
@@ -492,8 +507,8 @@ void watchdog_task(void *params) {
     // of the expected production rate of the producer() task and its check-in
     // fprintf(stderr, "In while\n");
     vTaskDelay(500);
-    uxBits = xEventGroupWaitBits(xEventGroup, BIT_1 | BIT_2, pdTRUE, pdFALSE, 205 / portTICK_PERIOD_MS);
-    if ((uxBits & (BIT_1 | BIT_2)) == (BIT_1 | BIT_2)) {
+    uxBits = xEventGroupWaitBits(xEventGroup, BIT_1 | BIT_2, pdTRUE, pdFALSE,
+205 / portTICK_PERIOD_MS); if ((uxBits & (BIT_1 | BIT_2)) == (BIT_1 | BIT_2)) {
       // xEventGroupWaitBits() returned because both bits were set.
       fprintf(stderr, "producer and consumer working\n");
 
@@ -526,7 +541,8 @@ bool i2c_slave_callback__read_memory(uint8_t memory_index, uint8_t *memory) {
   return status;
 }
 
-bool i2c_slave_callback__write_memory(uint8_t memory_index, uint8_t memory_value) {
+bool i2c_slave_callback__write_memory(uint8_t memory_index,
+                                      uint8_t memory_value) {
   // TODO: Write the memory_value at slave_memory[memory_index]
   // TODO: return true if memory_index is within bounds
   bool status = true;
@@ -554,7 +570,8 @@ void uart_read_task(void *p) {
   }
 }
 
-// Reader tasks receives song-name over Q_songname to start reading it(sending it into the queue for player to recieve)
+// Reader tasks receives song-name over Q_songname to start reading it(sending
+// it into the queue for player to recieve)
 void mp3_reader_task(void *p) {
   printf("in\n");
 
@@ -582,7 +599,8 @@ void mp3_reader_task(void *p) {
 
           memset(bytes_512, 0, sizeof(bytes_512));
 
-          if (FR_OK == f_read(&file, mp3_data_block, sizeof(mp3_data_block), &bytes_written)) {
+          if (FR_OK == f_read(&file, mp3_data_block, sizeof(mp3_data_block),
+                              &bytes_written)) {
             printf("read file %x\n", &mp3_data_block[0]);
 
             printf("about to send");
@@ -593,13 +611,11 @@ void mp3_reader_task(void *p) {
             if (xQueueReceive(Q_songname, &name[0], 0)) {
               break;
             }
-          } 
-          else {
+          } else {
             printf("Error: Failed to read");
           }
         }
-      } 
-      else {
+      } else {
         printf("Error: Failed to open file");
       }
 
@@ -661,17 +677,19 @@ int main(void) {
   write_file_using_fatfs_pi(true, p);
   fprintf(stderr, "print2\n");**/
   /**
-   * Note: When another Master interacts with us, it will invoke the I2C interrupt
-   *.      which will then invoke our i2c_slave_callbacks_*() from above
-   *       And thus, we only need to react to the changes of memory
+   * Note: When another Master interacts with us, it will invoke the I2C
+   *interrupt .      which will then invoke our i2c_slave_callbacks_*() from
+   *above And thus, we only need to react to the changes of memory
    */
   xTaskCreate(sj2_cli__init, "cli", (2048) / sizeof(void *), NULL, 1, NULL);
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, 512);
 
-  xTaskCreate(mp3_reader_task, "reader", (4000) / sizeof(void *), NULL, 1, NULL);
-  xTaskCreate(mp3_player_task, "player", (4000) / sizeof(void *), NULL, 2, NULL);
+  xTaskCreate(mp3_reader_task, "reader", (4000) / sizeof(void *), NULL, 1,
+              NULL);
+  xTaskCreate(mp3_player_task, "player", (4000) / sizeof(void *), NULL, 2,
+              NULL);
 
   vTaskStartScheduler();
 
@@ -709,28 +727,26 @@ void write_file_using_fatfs_pi(bool inTime, char *input) {
         time_data[len - 1] = 0;
         printf("Current local time and date: %s", time_data);
       }**/
-      sprintf(time_data, "Timestamp: %u/%02u/%02u, %02u:%02u\n", (fno.fdate >> 9) + 1980, fno.fdate >> 5 & 15,
-              fno.fdate & 31, fno.ftime >> 11, fno.ftime >> 5 & 63);
+      sprintf(time_data, "Timestamp: %u/%02u/%02u, %02u:%02u\n",
+              (fno.fdate >> 9) + 1980, fno.fdate >> 5 & 15, fno.fdate & 31,
+              fno.ftime >> 11, fno.ftime >> 5 & 63);
       printf("%s\n", time_data);
       sprintf(string, "[%s] \t %s\n", time_data, input);
       printf("true\n");
       // sprintf(string, "%s", input);
 
-    } 
-    else {
+    } else {
       fprintf(stderr, "false\n");
       sprintf(string, "%s", input);
     }
     printf("out");
     if (FR_OK == f_write(&file, string, strlen(string), &bytes_written)) {
       // printf("sent");
-    } 
-    else {
+    } else {
       printf("ERROR: Failed to write data to file\n");
     }
     f_close(&file);
-  } 
-  else {
+  } else {
     printf("ERROR: Failed to open: %s because %d\n", filename, result);
   }
 }
@@ -750,13 +766,11 @@ void write_file_using_fatfs_pi_1(char *sensor_value) {
 
     if (FR_OK == f_write(&file, string, strlen(string), &bytes_written)) {
       // printf("sent");
-    } 
-    else {
+    } else {
       printf("ERROR: Failed to write data to file\n");
     }
     f_close(&file);
-  } 
-  else {
+  } else {
     printf("ERROR: Failed to open: %s because %d\n", filename, result);
   }
 }
@@ -766,7 +780,8 @@ id pin_configure_pwm_channel_as_io_pin() {
   LPC_IOCON->P2_1 &= ~(3 << 0);
   LPC_IOCON->P2_1 |= (1 << 0);
 
-  // gpio_s gpio = gpio__construct_with_function(GPIO__PORT_2, pin, GPIO__FUNCTION_1);
+  // gpio_s gpio = gpio__construct_with_function(GPIO__PORT_2, pin,
+GPIO__FUNCTION_1);
   // gpio__set_as_output(gpio);
 }
 
@@ -796,7 +811,8 @@ void pwm_task(void *p) {
       vTaskDelay(100);
     }
 
-    // We do not need task delay because our queue API will put task to sleep when there is no data in the queue
+    // We do not need task delay because our queue API will put task to sleep
+when there is no data in the queue
     // vTaskDelay(100);
   }
 }
@@ -814,18 +830,19 @@ void adc_task(void *p) {
   // You can configure burst mode for just the channel you are using
   adc__enable_burst_mode();
 
-  // Configure a pin, such as P1.31 with FUNC 011 to route this pin as ADC channel 5
+  // Configure a pin, such as P1.31 with FUNC 011 to route this pin as ADC
+channel 5
   // You can use gpio__construct_with_function() API from gpio.h
   pin_configure_adc_channel_as_io_pin(); // TODO You need to write this function
 
-  int adc_reading = 0; // Note that this 'adc_reading' is not the same variable as the one from adc_task
-  while (1) {
+  int adc_reading = 0; // Note that this 'adc_reading' is not the same variable
+as the one from adc_task while (1) {
     // Implement code to send potentiometer value on the queue
     // a) read ADC input to 'int adc_reading'
     // b) Send to queue: xQueueSend(adc_to_pwm_task_queue, &adc_reading, 0);
-    const uint16_t adc_reading = adc__get_channel_reading_with_burst_mode(ADC__CHANNEL_2);
-    int reading = (int)adc_reading;
-    fprintf(stderr, "reading: %d\n", reading);
+    const uint16_t adc_reading =
+adc__get_channel_reading_with_burst_mode(ADC__CHANNEL_2); int reading =
+(int)adc_reading; fprintf(stderr, "reading: %d\n", reading);
     xQueueSend(adc_to_pwm_task_queue, &reading, 0);
     vTaskDelay(100);
   }
@@ -847,8 +864,8 @@ void adc_task(void *p) {
 
 void sleep_on_sem_task(void *p) {
   while (1) {
-    // Use xSemaphoreTake with forever delay and blink an LED when you get the signal
-    xSemaphoreTakeFromISR(switch_press_indication, portMAX_DELAY);
+    // Use xSemaphoreTake with forever delay and blink an LED when you get the
+signal xSemaphoreTakeFromISR(switch_press_indication, portMAX_DELAY);
     // fprintf(stderr, "sleep!");
   }
 }**/

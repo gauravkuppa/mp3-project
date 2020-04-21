@@ -19,7 +19,8 @@ void entry_point(void) {
   clock__initialize_system_clock_96mhz();
   sys_time__init(clock__get_peripheral_clock_hz());
 
-  // Peripherals init initializes UART and then we can print the crash report if applicable
+  // Peripherals init initializes UART and then we can print the crash report if
+  // applicable
   peripherals_init();
   entry_point__handle_crash_report();
 
@@ -42,7 +43,8 @@ static void entry_point__halt(void) {
 static void entry_point__handle_crash_report(void) {
   if (crash__report_if_occurred()) {
     while (sys_time__get_uptime_ms() < 5000) {
-      ; // Deliberately delay the startup and let the user carefully read the information
+      ; // Deliberately delay the startup and let the user carefully read the
+        // information
     }
   }
 }
