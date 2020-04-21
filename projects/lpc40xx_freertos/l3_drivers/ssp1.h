@@ -11,7 +11,7 @@
 #define SSP1__DMA_RX_CHANNEL 1
 
 /// Initialize the bus with the given maximum clock rate in Khz
-void ssp__initialize(uint32_t max_clock_khz);
+void ssp__init(uint32_t max_clock_khz);
 
 /// After initialization, this allows you to change the bus clock speed
 void ssp__set_max_clock(uint32_t max_clock_khz);

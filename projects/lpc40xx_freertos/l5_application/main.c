@@ -17,6 +17,7 @@
 #include "semphr.h"
 #include "sj2_cli.h"
 #include "ssp1.h"
+#include "ssp2.h"
 #include "task.h"
 #include "uart_lab.h"
 #include "uart_printf.h"
@@ -570,6 +571,8 @@ void uart_read_task(void *p) {
   }
 }
 
+spi_send_to_mp3_decoder(mp3_data_blocks data_to_decoder) {}
+
 // Reader tasks receives song-name over Q_songname to start reading it(sending
 // it into the queue for player to recieve)
 void mp3_reader_task(void *p) {
@@ -633,19 +636,37 @@ void mp3_player_task(void *p) {
   while (1) {
 
     if (xQueueReceive(Q_songdata, &mp3_data_block[0], portMAX_DELAY)) {
-      printf("recieved song data\n");
+      printf("recieved song data: %d\n", sizeof(mp3_data_block));
+      bool dreq = false;
+      dreq = gpioN__get_level(0, 8); // if dreq is high it will be true`
+                                     // printf("dreq: %d\n", dreq);
 
-      for (int i = 0; i < sizeof(mp3_data_block); i++) {
+      if (dreq == true) {
+        // printf("in mp3 if\n");
+        gpioN__set(0, 26, false); // set xdcs low
+        ssp__exchange_byte(0x2);  // op code
+        // ssp__exchange_byte();     // address
+        for (int i = 0; i < sizeof(mp3_data_block); i++) {
 
-        if (0) {
-          vTaskDelay(1);
+          if (0) {
+            vTaskDelay(1);
+          }
+          // printf("output: %s ", c);
+          // if (i > 2 && i < 33) {
+
+          // printf("%x", *(mp3_data_block + i));
+          // }
+          // spi_send_to_mp3_decoder(bytes_512[i]);
+
+          // for (int j = 0; j < 512; j++) {
+          printf("data: %x", mp3_data_block[i]);
+          ssp__exchange_byte(mp3_data_block[i]);
+          //}
+
+          // ssp2__dma_write_block(bytes_512[i], 512);
+          // spi_send_to_mp3_decoder(mp3_data_block[i]);
         }
-        // printf("output: %s ", c);
-        // if (i > 2 && i < 33) {
-
-        printf("%x", *(mp3_data_block + i));
-        // }
-        // spi_send_to_mp3_decoder(bytes_512[i]);
+        gpioN__set(0, 26, true); // set xdcs high
       }
 
       printf("out\n");
@@ -685,6 +706,19 @@ int main(void) {
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, 512);
+  gpio__construct_with_function(GPIO__PORT_0, 15,
+                                GPIO__FUNCTION_4); // SSP2, SCK
+  gpio__construct_with_function(GPIO__PORT_0, 17,
+                                GPIO__FUNCTION_4); // SSP2, MISO
+  gpio__construct_with_function(GPIO__PORT_0, 18,
+                                GPIO__FUNCTION_4); // SSP2, MOSI
+  gpioN__set_as_output(0, 6);                      // CS OUTPUT
+  gpioN__set_as_input(0, 8);                       // D REG INPUT
+  gpioN__set_as_output(0, 26);                     // xD CS
+  ssp__init(24);
+
+  gpioN__set(0, 26, true); // set xdcs high
+  gpioN__set(0, 6, false); // select mp3 functionality
 
   xTaskCreate(mp3_reader_task, "reader", (4000) / sizeof(void *), NULL, 1,
               NULL);
