@@ -147,18 +147,16 @@ void mp3_player_task(void *p) {
 
   mp3_data_blocks mp3_data_block;
   // char bytes_512[512];
-  uint8_t response = 0;
+  // uint8_t response = 0;
 
   while (1) {
 
     if (xQueueReceive(Q_songdata, &mp3_data_block[0], portMAX_DELAY)) {
       printf("recieved song data: %d\n", sizeof(mp3_data_block));
-      bool dreq_check = false;
-      dreq_check = gpioN__get_level(0, 8); // if dreq is high it will be true`
-                                           // printf("dreq: %d\n", dreq);
-      if (dreq_check == true) {
+
+      while (!gpio__get(dreq)) {
         // printf("in mp3 if\n");
-        gpioN__set(0, 26, false); // set xdcs low
+        gpio__reset(xdcs); // set xdcs low
         int counter = 0;
         for (int i = 0; i < sizeof(mp3_data_block); i++) {
 
@@ -166,18 +164,18 @@ void mp3_player_task(void *p) {
             vTaskDelay(1);
           }
           if (counter == 31) {
-            while (!dreq_check)
+            while (!gpio__get(dreq))
               ;
             counter = 0;
           }
-          printf("data: %x  ", mp3_data_block[i]);
-          response = ssp0__exchange_byte(*(mp3_data_block + i));
+          // printf("data: %x  ", mp3_data_block[i]);
+          ssp0__exchange_byte(*(mp3_data_block + i));
           // printf("response(garbage): %x  ", response);
           counter++;
           // ssp2__dma_write_block(bytes_512[i], 512);
           // spi_send_to_mp3_decoder(mp3_data_block[i]);
         }
-        gpioN__set(0, 26, true); // set xdcs high
+        gpio__set(xdcs); // set xdcs high
       }
 
       printf("out\n");
@@ -207,7 +205,7 @@ void decoder_init(uint8_t address, uint16_t value) {
 }
 
 void mp3write(uint8_t address, uint8_t highB, uint8_t lowB) {
-  while (!gpioN__get_level(0, 8)) {
+  while (!gpio__get(dreq)) {
     ;
   }
 
@@ -218,7 +216,7 @@ void mp3write(uint8_t address, uint8_t highB, uint8_t lowB) {
   ssp0__exchange_byte(highB);
   ssp0__exchange_byte(lowB);
 
-  while (!gpioN__get_level(0, 8)) {
+  while (!gpio__get(dreq)) {
     ;
   }
 
@@ -268,7 +266,7 @@ int main(void) {
       GPIO__PORT_0, 18, GPIO__FUNCTION_2); // SSP0 is function 010, MOSI
 
   // GPIO output, reset
-  rst = gpio__construct_with_function(GPIO__PORT_2, 4, 1);
+  rst = gpio__construct_with_function(GPIO__PORT_2, 4, 0);
   gpio__set_as_output(rst);
 
   // GPIO output, mp3cs
@@ -294,19 +292,21 @@ int main(void) {
   gpio__reset(rst);
 
   ssp__init(24);
-  ssp0__initialize(
-      1000); // set to 1Mhz (internal clock is 12 MHz - SCI reads at clock/7 -
-             // initial commands should not be faster than 1.7 MHz) ssp0 driver sets in KHz
+  ssp0__initialize(1000); // set to 1Mhz (internal clock is 12 MHz - SCI reads
+                          // at clock/7 - initial commands should not be faster
+                          // than 1.7 MHz) ssp0 driver sets in KHz.  Our driver
+                          // needs to be double that of the slave.
 
   ssp0__exchange_byte(0xFF);
   delay__ms(10);
 
   gpio__set(rst);
 
-  mp3write(0x00, 0x48, 0x80); // output mode
+  mp3write(0x00, 0x48, 0x00); // output mode
+  // mp3write(0x03, 0x60, 0x00); // output mode
   mp3write(0x0B, 0x40, 0x40); // set volume
   // decoder_init(0x2, 0x7A00); // bass
-  // decoder_init(0x3, 0xA000); // clk
+  // decoder_init(0x3, 0x6000); // clk
   int mp3mode = mp3read(0x00);
   printf("mode: %i\n", mp3mode);
 
@@ -318,6 +318,14 @@ int main(void) {
   int MP3Status = mp3read(0x01);
   int MP3Clock = mp3read(0x03);
   int version = (MP3Status >> 4) & 0x000F;
+
+  fprintf(stderr, "clock: %x \n", MP3Clock);
+
+  mp3write(0x03, 0x60, 0x00);
+
+  ssp0__set_max_clock(4000);
+
+  MP3Clock = mp3read(0x03);
 
   // reset();
 
