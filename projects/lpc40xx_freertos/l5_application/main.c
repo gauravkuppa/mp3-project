@@ -154,29 +154,21 @@ void mp3_player_task(void *p) {
     if (xQueueReceive(Q_songdata, &mp3_data_block[0], portMAX_DELAY)) {
       printf("recieved song data: %d\n", sizeof(mp3_data_block));
 
-      while (!gpio__get(dreq)) {
-        // printf("in mp3 if\n");
-        gpio__reset(xdcs); // set xdcs low
-        int counter = 0;
-        for (int i = 0; i < sizeof(mp3_data_block); i++) {
+      gpio__reset(xdcs); // set xdcs low
 
-          if (0) {
-            vTaskDelay(1);
-          }
-          if (counter == 31) {
-            while (!gpio__get(dreq))
-              ;
-            counter = 0;
-          }
-          // printf("data: %x  ", mp3_data_block[i]);
-          ssp0__exchange_byte(*(mp3_data_block + i));
-          // printf("response(garbage): %x  ", response);
-          counter++;
-          // ssp2__dma_write_block(bytes_512[i], 512);
-          // spi_send_to_mp3_decoder(mp3_data_block[i]);
-        }
-        gpio__set(xdcs); // set xdcs high
+      for (int i = 0; i < sizeof(mp3_data_block); i++) {
+
+        while (!gpio__get(dreq))
+          ;
+
+        printf("data: %x  ", mp3_data_block[i]);
+        ssp0__exchange_byte(mp3_data_block[i]);
+
+        // ssp2__dma_write_block(bytes_512[i], 512);
+        // spi_send_to_mp3_decoder(mp3_data_block[i]);
       }
+
+      gpio__set(xdcs); // set xdcs high
 
       printf("out\n");
     }
@@ -294,17 +286,17 @@ int main(void) {
   ssp__init(24);
   ssp0__initialize(1000); // set to 1Mhz (internal clock is 12 MHz - SCI reads
                           // at clock/7 - initial commands should not be faster
-                          // than 1.7 MHz) ssp0 driver sets in KHz.  Our driver
-                          // needs to be double that of the slave.
+                          // than 1.7 MHz) ssp0 driver sets in KHz.
 
   ssp0__exchange_byte(0xFF);
   delay__ms(10);
 
   gpio__set(rst);
 
-  mp3write(0x00, 0x48, 0x00); // output mode
+  mp3write(0x00, 0x08, 0x00); // output mode
   // mp3write(0x03, 0x60, 0x00); // output mode
   mp3write(0x0B, 0x40, 0x40); // set volume
+  mp3write(0x02, 0x7A, 0x00); // set volume
   // decoder_init(0x2, 0x7A00); // bass
   // decoder_init(0x3, 0x6000); // clk
   int mp3mode = mp3read(0x00);
