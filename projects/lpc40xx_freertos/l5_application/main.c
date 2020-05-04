@@ -5,6 +5,7 @@
 #include "common_macros.h"
 #include "event_groups.h"
 #include "ff.h"
+#include "gpio.h"
 #include "gpio_isr.h"
 #include "gpio_lab.h"
 #include "i2c.h"
@@ -17,6 +18,7 @@
 #include "queue.h"
 #include "semphr.h"
 #include "sj2_cli.h"
+#include "ssp0.h"
 #include "ssp1.h"
 #include "ssp2.h"
 #include "task.h"
@@ -26,9 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-//#include <xc.h>
-
-#define _XTAL_FREQ 8000000 // System clock frequency
 
 typedef char songname_t[16];
 typedef uint8_t mp3_data_blocks[512];
@@ -42,53 +41,7 @@ static EventBits_t uxBits;
 
 static volatile uint8_t slave_memory[256];
 
-gpio_s sck, miso, mosi, dreq, mp3cs, sdcs, xdcs;
-
-// // CONFIG1
-// #pragma config FOSC = HS   // Oscillator Selection bits (HS oscillator)
-// #pragma config WDTE = OFF  // Watchdog Timer Enable bit (WDT disabled)
-// #pragma config PWRTE = OFF // Power-up Timer Enable bit (PWRT disabled)
-// #pragma config MCLRE = \
-//     ON // RA5/MCLR/VPP Pin Function Select bit (RA5/MCLR/VPP pin function is
-//        // digital I/O, MCLR internally tied to VDD)
-// #pragma config BOREN = ON // Brown-out Reset Enable bit (BOR enabled)
-// #pragma config LVP = OFF  // Low-Voltage Programming Enable bit (RB3/PGM pin
-// has
-//                           // PGM function, Low-Voltage Programming enabled)
-// #pragma config CPD = \
-//     OFF // Data EE Memory Code Protection bit (Code protection off)
-// #pragma config WRT = \
-//     OFF // Flash Program Memory Write Enable bits (Write protection off)
-// #pragma config CCPMX = RB0 // CCP1 Pin Selection bit (CCP1 function on RB0)
-// #pragma config CP = \
-//     OFF // Flash Program Memory Code Protection bit (Code protection off)
-// // CONFIG2
-// #pragma config FCMEN = OFF // Fail-Safe Clock Monitor Enable bit (Fail-Safe
-//                            // Clock Monitor disabled)
-// #pragma config IESO = OFF // Internal External Switchover bit (Internal
-// External
-//                           // Switchover mode disabled)
-
-// void test_lcd(void) {
-//   OSCCONbits.SCS = 0b00; // Oscillator mode defined by FOSC<2:0>
-//   ANSEL = 0x00;          // Set all I/O to digital I/O
-
-//   PORTB = 0x00; // Preset port B to 0
-//   TRISB = 0x00; // Set port B as output
-
-//   LCDInit();
-
-//   while (1) {
-//     LCDWriteString("Hello           ");
-//     __delay_ms(1000);
-//     LCDMoveCursor(1, 0);
-//     LCDWriteString("World!          ");
-//     __delay_ms(1000);
-//     LCDClear();
-//     __delay_ms(1000);
-//   }
-//   return;
-// }
+gpio_s sck, miso, mosi, dreq, mp3cs, sdcs, xdcs, rst;
 
 bool i2c_slave_callback__read_memory(uint8_t memory_index, uint8_t *memory) {
   // TODO: Read the data from slave_memory[memory_index] to *memory pointer
@@ -168,20 +121,20 @@ void mp3_reader_task(void *p) {
                               &bytes_written)) {
             printf("read file %x\n", &mp3_data_block[0]);
 
-            printf("about to send");
-            xQueueSend(Q_songdata, mp3_data_block[0], portMAX_DELAY);
-            // printf("%x", mp3_data_block); // testing print
+            printf("about to send\n");
+            xQueueSend(Q_songdata, mp3_data_block, portMAX_DELAY);
+            // printf("%x", mp3_data_block);mp3_data_block // testing print
             vTaskDelay(300);
 
             if (xQueueReceive(Q_songname, &name[0], 0)) {
               break;
             }
           } else {
-            printf("Error: Failed to read");
+            printf("Error: Failed to read\n");
           }
         }
       } else {
-        printf("Error: Failed to open file");
+        printf("Error: Failed to open file\n");
       }
 
       f_close(&file);
@@ -194,37 +147,33 @@ void mp3_player_task(void *p) {
 
   mp3_data_blocks mp3_data_block;
   // char bytes_512[512];
+  uint8_t response = 0;
 
   while (1) {
 
     if (xQueueReceive(Q_songdata, &mp3_data_block[0], portMAX_DELAY)) {
       printf("recieved song data: %d\n", sizeof(mp3_data_block));
-      bool dreq = false;
-      dreq = gpioN__get_level(0, 8); // if dreq is high it will be true`
-                                     // printf("dreq: %d\n", dreq);
-
-      if (dreq == true) {
+      bool dreq_check = false;
+      dreq_check = gpioN__get_level(0, 8); // if dreq is high it will be true`
+                                           // printf("dreq: %d\n", dreq);
+      if (dreq_check == true) {
         // printf("in mp3 if\n");
         gpioN__set(0, 26, false); // set xdcs low
-        ssp__exchange_byte(0x2);  // op code
-        // ssp__exchange_byte();     // address
+        int counter = 0;
         for (int i = 0; i < sizeof(mp3_data_block); i++) {
 
           if (0) {
             vTaskDelay(1);
           }
-          // printf("output: %s ", c);
-          // if (i > 2 && i < 33) {
-
-          // printf("%x", *(mp3_data_block + i));
-          // }
-          // spi_send_to_mp3_decoder(bytes_512[i]);
-
-          // for (int j = 0; j < 512; j++) {
-          printf("data: %x", mp3_data_block[i]);
-          ssp__exchange_byte(mp3_data_block[i]);
-          //}
-
+          if (counter == 31) {
+            while (!dreq_check)
+              ;
+            counter = 0;
+          }
+          printf("data: %x  ", mp3_data_block[i]);
+          response = ssp0__exchange_byte(*(mp3_data_block + i));
+          // printf("response(garbage): %x  ", response);
+          counter++;
           // ssp2__dma_write_block(bytes_512[i], 512);
           // spi_send_to_mp3_decoder(mp3_data_block[i]);
         }
@@ -238,17 +187,70 @@ void mp3_player_task(void *p) {
 // Used to initialize the decoder
 
 void decoder_init(uint8_t address, uint16_t value) {
+
+  uint8_t highVal = (value >> 8);
+  uint8_t lowVal = value;
+
+  fprintf(stderr, "in the init\n");
+  fprintf(stderr, "high: %x, low:%x \n", highVal, lowVal);
+
   gpioN__set(0, 6, false); // select MP3 SCI
 
-  ssp__exchange_byte(0x02); // WRITE_CODE = 0x02
-  ssp__exchange_byte(address);
-  ssp__exchange_byte(value >> 8); // high byte
-  ssp__exchange_byte(value);      // low byte
-
-  gpioN__set(0, 6, true); // deselect MP3 SCI
+  ssp0__exchange_byte(0x02); // WRITE_CODE = 0x02
+  ssp0__exchange_byte(address);
+  ssp0__exchange_byte(highVal); // high byte
+  ssp0__exchange_byte(lowVal);  // low byte
   // wait until DREQ becomes 1
   while (!gpioN__get_level(0, 8))
     ;
+  gpioN__set(0, 6, true); // deselect MP3 SCI
+}
+
+void mp3write(uint8_t address, uint8_t highB, uint8_t lowB) {
+  while (!gpioN__get_level(0, 8)) {
+    ;
+  }
+
+  gpio__reset(mp3cs); // set mp3cs low (select)
+
+  ssp0__exchange_byte(0x02);
+  ssp0__exchange_byte(address);
+  ssp0__exchange_byte(highB);
+  ssp0__exchange_byte(lowB);
+
+  while (!gpioN__get_level(0, 8)) {
+    ;
+  }
+
+  gpio__set(mp3cs); // set mp3cs high (deselect)
+}
+
+void reset() {
+  gpioN__set(2, 4, true);
+  delay__ms(1);
+  gpioN__set(2, 4, false);
+}
+
+unsigned int mp3read(unsigned char addressbyte) {
+  while (!gpioN__get_level(0, 8))
+    ;
+  gpio__reset(mp3cs); // Select control
+
+  // SCI consists of instruction byte, address byte, and 16-bit data word.
+  ssp0__exchange_byte(0x03); // Read instrucction
+  ssp0__exchange_byte(addressbyte);
+
+  char response1 = ssp0__exchange_byte(0xFF); // Read the first byte
+  while (!gpioN__get_level(0, 8))
+    ;
+  char response2 = ssp0__exchange_byte(0xFF); // Read the second byte
+  while (!gpioN__get_level(0, 8))
+    ;
+  gpio__set(mp3cs);
+
+  int resultvalue = response1 << 8;
+  resultvalue |= response2;
+  return resultvalue;
 }
 
 int main(void) {
@@ -265,6 +267,10 @@ int main(void) {
   mosi = gpio__construct_with_function(
       GPIO__PORT_0, 18, GPIO__FUNCTION_2); // SSP0 is function 010, MOSI
 
+  // GPIO output, reset
+  rst = gpio__construct_with_function(GPIO__PORT_2, 4, 1);
+  gpio__set_as_output(rst);
+
   // GPIO output, mp3cs
   mp3cs = gpio__construct_with_function(GPIO__PORT_0, 6, 0);
   gpio__set_as_output(mp3cs);
@@ -278,22 +284,54 @@ int main(void) {
   gpio__set_as_output(xdcs);
 
   // GPIO output, sdcs
-  sdcs = gpio__construct_with_function(GPIO__PORT_1, 31, 0);
+  sdcs = gpio__construct_with_function(GPIO__PORT_1, 31, 1);
   gpio__set_as_output(sdcs);
 
+  // explicitly deactivate slaves and initiate reset
+  gpio__set(mp3cs);
+  gpio__set(xdcs);
+  gpio__set(sdcs);
+  gpio__reset(rst);
+
   ssp__init(24);
+  ssp0__initialize(1000); // set to 1Mhz (internal clock is 12 MHz - SCI reads at clock/7 - initial commands should not be faster than 1.7 MHz)
 
-  decoder_init(0x0, 0x0810); // mode
-  decoder_init(0x2, 0x7A00); // bass
+  ssp0__exchange_byte(0xFF);
+  delay__ms(10);
+
+  gpio__set(rst);
+
+  mp3write(0x00, 0x48, 0x80); // output mode
+  mp3write(0x0B, 0x40, 0x40); // set volume
+  // decoder_init(0x2, 0x7A00); // bass
   decoder_init(0x3, 0xA000); // clk
+  int mp3mode = mp3read(0x00);
+  printf("mode: %i\n", mp3mode);
 
-  gpioN__set(0, 26, true); // set xdcs high
-  gpioN__set(0, 6, false); // select mp3 functionality
+  gpio__set(sdcs);    // set sdcs high
+  gpio__set(xdcs);    // set xdcs high
+  gpio__reset(mp3cs); // select mp3 functionality
+
+  int MP3Mode = mp3read(0x00);
+  int MP3Status = mp3read(0x01);
+  int MP3Clock = mp3read(0x03);
+  int version = (MP3Status >> 4) & 0x000F;
+
+  // reset();
 
   xTaskCreate(mp3_reader_task, "reader", (4000) / sizeof(void *), NULL, 1,
               NULL);
   xTaskCreate(mp3_player_task, "player", (4000) / sizeof(void *), NULL, 2,
               NULL);
+
+  fprintf(stderr, "mode: %x \n", MP3Mode);
+  fprintf(stderr, "status: %x \n", MP3Status);
+  fprintf(stderr, "clock: %x \n", MP3Clock);
+  fprintf(stderr, "version: %x \n", version);
+
+  // char *str = "hello";
+  // init_lcd();
+  // print_msg(str);
 
   vTaskStartScheduler();
 
@@ -324,7 +362,6 @@ void write_file_using_fatfs_pi(bool inTime, char *input) {
       sprintf(string, "[%s] \t %s\n", time_data, input);
       printf("true\n");
       // sprintf(string, "%s", input);
-
     } else {
       fprintf(stderr, "false\n");
       sprintf(string, "%s", input);
