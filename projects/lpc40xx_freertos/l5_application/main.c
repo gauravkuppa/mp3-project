@@ -283,24 +283,22 @@ int main(void) {
   gpio__set(sdcs);
   gpio__reset(rst);
 
-  ssp__init(24);
-  ssp0__initialize(1000); // set to 1Mhz (internal clock is 12 MHz - SCI reads
-                          // at clock/7 - initial commands should not be faster
-                          // than 1.7 MHz) ssp0 driver sets in KHz.
+  ssp__init(24);          // ssp1 not sure what this is used for
+  ssp0__initialize(1000); // ssp0 driver sets in KHz. Set to 1Mhz (internal
+                          // clock is 12 MHz - SCI reads at clock/7 - initial
+                          // commands should not be faster than 1.7 MHz)
 
   ssp0__exchange_byte(0xFF);
   delay__ms(10);
 
   gpio__set(rst);
 
-  mp3write(0x00, 0x08, 0x00); // output mode
+  mp3write(0x00, 0x88, 0x00); // output mode
   // mp3write(0x03, 0x60, 0x00); // output mode
   mp3write(0x0B, 0x40, 0x40); // set volume
-  mp3write(0x02, 0x7A, 0x00); // set volume
+  mp3write(0x02, 0x7A, 0x00); // set bass
   // decoder_init(0x2, 0x7A00); // bass
   // decoder_init(0x3, 0x6000); // clk
-  int mp3mode = mp3read(0x00);
-  printf("mode: %i\n", mp3mode);
 
   gpio__set(sdcs);    // set sdcs high
   gpio__set(xdcs);    // set xdcs high
@@ -312,6 +310,10 @@ int main(void) {
   int version = (MP3Status >> 4) & 0x000F;
 
   fprintf(stderr, "clock: %x \n", MP3Clock);
+  fprintf(stderr, "mode: %x \n", MP3Mode);
+
+  mp3write(0x00, 0x08, 0x00);
+  MP3Mode = mp3read(0x00);
 
   mp3write(0x03, 0x60, 0x00);
 
