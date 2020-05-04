@@ -232,7 +232,7 @@ void reset() {
 }
 
 unsigned int mp3read(unsigned char addressbyte) {
-  while (!gpioN__get_level(0, 8))
+  while (!gpio__get(dreq))
     ;
   gpio__reset(mp3cs); // Select control
 
@@ -241,10 +241,10 @@ unsigned int mp3read(unsigned char addressbyte) {
   ssp0__exchange_byte(addressbyte);
 
   char response1 = ssp0__exchange_byte(0xFF); // Read the first byte
-  while (!gpioN__get_level(0, 8))
+  while (!gpio__get(dreq))
     ;
   char response2 = ssp0__exchange_byte(0xFF); // Read the second byte
-  while (!gpioN__get_level(0, 8))
+  while (!gpio__get(dreq))
     ;
   gpio__set(mp3cs);
 
@@ -294,7 +294,9 @@ int main(void) {
   gpio__reset(rst);
 
   ssp__init(24);
-  ssp0__initialize(1000); // set to 1Mhz (internal clock is 12 MHz - SCI reads at clock/7 - initial commands should not be faster than 1.7 MHz)
+  ssp0__initialize(
+      1000); // set to 1Mhz (internal clock is 12 MHz - SCI reads at clock/7 -
+             // initial commands should not be faster than 1.7 MHz) ssp0 driver sets in KHz
 
   ssp0__exchange_byte(0xFF);
   delay__ms(10);
@@ -304,7 +306,7 @@ int main(void) {
   mp3write(0x00, 0x48, 0x80); // output mode
   mp3write(0x0B, 0x40, 0x40); // set volume
   // decoder_init(0x2, 0x7A00); // bass
-  decoder_init(0x3, 0xA000); // clk
+  // decoder_init(0x3, 0xA000); // clk
   int mp3mode = mp3read(0x00);
   printf("mode: %i\n", mp3mode);
 
