@@ -21,7 +21,7 @@ void ssp0__set_max_clock(uint32_t max_clock_khz) {
   uint32_t cvpdsr = 2; // 96MHz
   uint32_t pclk_khz = clock__get_peripheral_clock_hz() / 1000UL;
 
-  while (max_clock_khz < pclk_khz / cvpdsr && cvpdsr < 255) {
+  while (max_clock_khz < (pclk_khz / cvpdsr) && cvpdsr < 255) {
     cvpdsr += 2;
   }
 

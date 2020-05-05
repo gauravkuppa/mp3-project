@@ -101,7 +101,7 @@ void mp3_reader_task(void *p) {
     printf("in while\n");
 
     if (xQueueReceive(Q_songname, &name[0], portMAX_DELAY)) {
-      printf("Received song to play: %s\n", name);
+      // printf("Received song to play: %s\n", name);
 
       const char *filename = &name;
       uint8_t counter = 0;
@@ -113,18 +113,18 @@ void mp3_reader_task(void *p) {
       if (result == FR_OK) {
 
         while (!f_eof(&file)) {
-          printf("About to read\n");
+          // printf("About to read\n");
 
           memset(bytes_512, 0, sizeof(bytes_512));
 
           if (FR_OK == f_read(&file, mp3_data_block, sizeof(mp3_data_block),
                               &bytes_written)) {
-            printf("read file %x\n", &mp3_data_block[0]);
+            // printf("read file %x\n", &mp3_data_block[0]);
 
-            printf("about to send\n");
+            // printf("about to send\n");
             xQueueSend(Q_songdata, mp3_data_block, portMAX_DELAY);
             // printf("%x", mp3_data_block);mp3_data_block // testing print
-            vTaskDelay(300);
+            // vTaskDelay(300);
 
             if (xQueueReceive(Q_songname, &name[0], 0)) {
               break;
@@ -152,17 +152,24 @@ void mp3_player_task(void *p) {
   while (1) {
 
     if (xQueueReceive(Q_songdata, &mp3_data_block[0], portMAX_DELAY)) {
-      printf("recieved song data: %d\n", sizeof(mp3_data_block));
+      // printf("recieved song data: %d\n", sizeof(mp3_data_block));
 
       gpio__reset(xdcs); // set xdcs low
 
-      for (int i = 0; i < sizeof(mp3_data_block); i++) {
+      // fprintf(stderr, "size: %d \n", sizeof(mp3_data_block));
 
-        while (!gpio__get(dreq))
-          ;
+      for (int i = 0; i < sizeof(mp3_data_block) / 32; i++) {
+        // fprintf(stderr, "i: %d \n", i);
+        while (!gpio__get(dreq)) {
+          printf("waiting for dreq\n");
+        }
 
-        printf("data: %x  ", mp3_data_block[i]);
-        ssp0__exchange_byte(mp3_data_block[i]);
+        for (int j = (i * 32); j < (i * 32) + 32; j++) {
+          ssp0__exchange_byte(*(mp3_data_block + j));
+        }
+        // fprintf(stderr, " %d ", j);
+
+        // fprintf(stderr, "\n");
 
         // ssp2__dma_write_block(bytes_512[i], 512);
         // spi_send_to_mp3_decoder(mp3_data_block[i]);
@@ -170,7 +177,7 @@ void mp3_player_task(void *p) {
 
       gpio__set(xdcs); // set xdcs high
 
-      printf("out\n");
+      // printf("out\n");
     }
   }
 }
@@ -198,7 +205,7 @@ void decoder_init(uint8_t address, uint16_t value) {
 
 void mp3write(uint8_t address, uint8_t highB, uint8_t lowB) {
   while (!gpio__get(dreq)) {
-    ;
+    printf("waiting for dreq in sci\n");
   }
 
   gpio__reset(mp3cs); // set mp3cs low (select)
@@ -209,7 +216,7 @@ void mp3write(uint8_t address, uint8_t highB, uint8_t lowB) {
   ssp0__exchange_byte(lowB);
 
   while (!gpio__get(dreq)) {
-    ;
+    printf("waiting for dreq in sci\n");
   }
 
   gpio__set(mp3cs); // set mp3cs high (deselect)
@@ -244,8 +251,8 @@ unsigned int mp3read(unsigned char addressbyte) {
 }
 
 int main(void) {
-
-  xTaskCreate(sj2_cli__init, "cli", (2048) / sizeof(void *), NULL, 1, NULL);
+  ssp2__initialize(24000);
+  xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1, NULL);
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, 512);
@@ -282,27 +289,27 @@ int main(void) {
   gpio__set(xdcs);
   gpio__set(sdcs);
   gpio__reset(rst);
+  delay__ms(2);
 
-  ssp__init(24);          // ssp1 not sure what this is used for
+  // ssp__init(24);          // ssp1 not sure what this is used for
   ssp0__initialize(1000); // ssp0 driver sets in KHz. Set to 1Mhz (internal
                           // clock is 12 MHz - SCI reads at clock/7 - initial
                           // commands should not be faster than 1.7 MHz)
 
   ssp0__exchange_byte(0xFF);
-  delay__ms(10);
-
   gpio__set(rst);
+  delay__ms(5000);
 
   mp3write(0x00, 0x88, 0x00); // output mode
   // mp3write(0x03, 0x60, 0x00); // output mode
-  mp3write(0x0B, 0x40, 0x40); // set volume
-  mp3write(0x02, 0x7A, 0x00); // set bass
+  // mp3write(0x0B, 0x10, 0x10); // set volume
+  // mp3write(0x02, 0x7A, 0x00); // set bass
   // decoder_init(0x2, 0x7A00); // bass
   // decoder_init(0x3, 0x6000); // clk
 
-  gpio__set(sdcs);    // set sdcs high
-  gpio__set(xdcs);    // set xdcs high
-  gpio__reset(mp3cs); // select mp3 functionality
+  gpio__set(sdcs);  // set sdcs high
+  gpio__set(xdcs);  // set xdcs high
+  gpio__set(mp3cs); // deselect mp3 functionality
 
   int MP3Mode = mp3read(0x00);
   int MP3Status = mp3read(0x01);
@@ -312,20 +319,19 @@ int main(void) {
   fprintf(stderr, "clock: %x \n", MP3Clock);
   fprintf(stderr, "mode: %x \n", MP3Mode);
 
-  mp3write(0x00, 0x08, 0x00);
+  mp3write(0x00, 0x48, 0x10);
   MP3Mode = mp3read(0x00);
 
+  // mp3write(0x03, 0x88, 0x00); // clock
   mp3write(0x03, 0x60, 0x00);
-
-  ssp0__set_max_clock(4000);
-
   MP3Clock = mp3read(0x03);
+  ssp0__set_max_clock(6000); // increase spi clock
 
   // reset();
-
-  xTaskCreate(mp3_reader_task, "reader", (4000) / sizeof(void *), NULL, 1,
+  delay__ms(10);
+  xTaskCreate(mp3_reader_task, "reader", (4096 / sizeof(void *)), NULL, 1,
               NULL);
-  xTaskCreate(mp3_player_task, "player", (4000) / sizeof(void *), NULL, 2,
+  xTaskCreate(mp3_player_task, "player", (4096 / sizeof(void *)), NULL, 2,
               NULL);
 
   fprintf(stderr, "mode: %x \n", MP3Mode);
@@ -372,7 +378,7 @@ void write_file_using_fatfs_pi(bool inTime, char *input) {
     }
     printf("out");
     if (FR_OK == f_write(&file, string, strlen(string), &bytes_written)) {
-      // printf("sent");
+      printf("sent");
     } else {
       printf("ERROR: Failed to write data to file\n");
     }
@@ -396,7 +402,7 @@ void write_file_using_fatfs_pi_1(char *sensor_value) {
     sprintf(string, "%li, %s\n", xTaskGetTickCount(), sensor_value);
 
     if (FR_OK == f_write(&file, string, strlen(string), &bytes_written)) {
-      // printf("sent");
+      printf("sent");
     } else {
       printf("ERROR: Failed to write data to file\n");
     }
