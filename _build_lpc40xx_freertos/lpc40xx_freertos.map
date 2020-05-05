@@ -3162,7 +3162,7 @@ END GROUP
                 0x10000000                PROVIDE (_bdata_vma = ADDR (.data))
 OUTPUT(_build_lpc40xx_freertos\lpc40xx_freertos.elf elf32-littlearm)
 
-.debug_info     0x00000000    0x25d12
+.debug_info     0x00000000    0x25d11
  .debug_info    0x00000000      0xae0 _build_lpc40xx_freertos\obj\entry_point.o
  .debug_info    0x00000ae0      0xd91 _build_lpc40xx_freertos\obj\interrupt_vector_table.o
  .debug_info    0x00001871      0x454 _build_lpc40xx_freertos\obj\clock.o
@@ -3202,8 +3202,8 @@ OUTPUT(_build_lpc40xx_freertos\lpc40xx_freertos.elf elf32-littlearm)
  .debug_info    0x00021de6      0x37d _build_lpc40xx_freertos\obj\ssp2_mutex.o
  .debug_info    0x00022163      0x337 _build_lpc40xx_freertos\obj\sys_time.o
  .debug_info    0x0002249a      0xd1d _build_lpc40xx_freertos\obj\uart_printf.o
- .debug_info    0x000231b7     0x22c5 _build_lpc40xx_freertos\obj\main.o
- .debug_info    0x0002547c      0x896 _build_lpc40xx_freertos\obj\rtos_hooks.o
+ .debug_info    0x000231b7     0x22c4 _build_lpc40xx_freertos\obj\main.o
+ .debug_info    0x0002547b      0x896 _build_lpc40xx_freertos\obj\rtos_hooks.o
 
 .debug_abbrev   0x00000000     0x68e8
  .debug_abbrev  0x00000000      0x247 _build_lpc40xx_freertos\obj\entry_point.o

@@ -25,14 +25,14 @@ Idx Name             Size      VMA       LMA       File off  Algn  Flags
   2 .data            00000364  10000000  0000da24  00020000  2**2  CONTENTS, ALLOC, LOAD, DATA
   3 .bss             000010d4  10000368  0000dd88  00020368  2**3  ALLOC
   4 .persistent_ram2 00000028  20000000  20000000  00030000  2**2  ALLOC
-  5 .debug_info      00025d12  00000000  00000000  00020364  2**0  CONTENTS, READONLY, DEBUGGING
-  6 .debug_abbrev    000068e8  00000000  00000000  00046076  2**0  CONTENTS, READONLY, DEBUGGING
-  7 .debug_aranges   00000f80  00000000  00000000  0004c95e  2**0  CONTENTS, READONLY, DEBUGGING
-  8 .debug_ranges    00001cc8  00000000  00000000  0004d8de  2**0  CONTENTS, READONLY, DEBUGGING
-  9 .debug_line      00013b04  00000000  00000000  0004f5a6  2**0  CONTENTS, READONLY, DEBUGGING
- 10 .debug_str       00006a2a  00000000  00000000  000630aa  2**0  CONTENTS, READONLY, DEBUGGING
- 11 .comment         00000076  00000000  00000000  00069ad4  2**0  CONTENTS, READONLY
- 12 .ARM.attributes  00000032  00000000  00000000  00069b4a  2**0  CONTENTS, READONLY
+  5 .debug_info      00025d11  00000000  00000000  00020364  2**0  CONTENTS, READONLY, DEBUGGING
+  6 .debug_abbrev    000068e8  00000000  00000000  00046075  2**0  CONTENTS, READONLY, DEBUGGING
+  7 .debug_aranges   00000f80  00000000  00000000  0004c95d  2**0  CONTENTS, READONLY, DEBUGGING
+  8 .debug_ranges    00001cc8  00000000  00000000  0004d8dd  2**0  CONTENTS, READONLY, DEBUGGING
+  9 .debug_line      00013b04  00000000  00000000  0004f5a5  2**0  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str       00006a2a  00000000  00000000  000630a9  2**0  CONTENTS, READONLY, DEBUGGING
+ 11 .comment         00000076  00000000  00000000  00069ad3  2**0  CONTENTS, READONLY
+ 12 .ARM.attributes  00000032  00000000  00000000  00069b49  2**0  CONTENTS, READONLY
  13 .debug_frame     000045ac  00000000  00000000  00069b7c  2**2  CONTENTS, READONLY, DEBUGGING
  14 .debug_loc       000127da  00000000  00000000  0006e128  2**0  CONTENTS, READONLY, DEBUGGING
  15 .stab            00000054  00000000  00000000  00080904  2**2  CONTENTS, READONLY, DEBUGGING
@@ -20335,159 +20335,159 @@ C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\l
     5bf2:	ea43 2000 	orr.w	r0, r3, r0, lsl #8
     5bf6:	f7fc fd77 	bl	26e8 <gpio__set>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:301
-  delay__ms(5000);
-    5bfa:	f241 3088 	movw	r0, #5000	; 0x1388
-    5bfe:	f7ff fcd8 	bl	55b2 <delay__ms>
+  delay__ms(50);
+    5bfa:	2032      	movs	r0, #50	; 0x32
+    5bfc:	f7ff fcd9 	bl	55b2 <delay__ms>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:303
   mp3write(0x00, 0x88, 0x00); // output mode
-    5c02:	4622      	mov	r2, r4
-    5c04:	2188      	movs	r1, #136	; 0x88
-    5c06:	4620      	mov	r0, r4
-    5c08:	f7ff feb0 	bl	596c <mp3write>
+    5c00:	4622      	mov	r2, r4
+    5c02:	2188      	movs	r1, #136	; 0x88
+    5c04:	4620      	mov	r0, r4
+    5c06:	f7ff feb1 	bl	596c <mp3write>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:310
   gpio__set(sdcs);  // set sdcs high
-    5c0c:	f898 3000 	ldrb.w	r3, [r8]
-    5c10:	f898 0001 	ldrb.w	r0, [r8, #1]
+    5c0a:	f898 3000 	ldrb.w	r3, [r8]
+    5c0e:	f898 0001 	ldrb.w	r0, [r8, #1]
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:319
   fprintf(stderr, "clock: %x \n", MP3Clock);
-    5c14:	f8df 8138 	ldr.w	r8, [pc, #312]	; 5d50 <main+0x2e4>
+    5c12:	f8df 813c 	ldr.w	r8, [pc, #316]	; 5d50 <main+0x2e4>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:310
   gpio__set(sdcs);  // set sdcs high
-    5c18:	ea43 2000 	orr.w	r0, r3, r0, lsl #8
-    5c1c:	f7fc fd64 	bl	26e8 <gpio__set>
+    5c16:	ea43 2000 	orr.w	r0, r3, r0, lsl #8
+    5c1a:	f7fc fd65 	bl	26e8 <gpio__set>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:311
   gpio__set(xdcs);  // set xdcs high
-    5c20:	783b      	ldrb	r3, [r7, #0]
-    5c22:	7878      	ldrb	r0, [r7, #1]
-    5c24:	ea43 2000 	orr.w	r0, r3, r0, lsl #8
-    5c28:	f7fc fd5e 	bl	26e8 <gpio__set>
+    5c1e:	783b      	ldrb	r3, [r7, #0]
+    5c20:	7878      	ldrb	r0, [r7, #1]
+    5c22:	ea43 2000 	orr.w	r0, r3, r0, lsl #8
+    5c26:	f7fc fd5f 	bl	26e8 <gpio__set>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:312
   gpio__set(mp3cs); // deselect mp3 functionality
-    5c2c:	7833      	ldrb	r3, [r6, #0]
-    5c2e:	7870      	ldrb	r0, [r6, #1]
+    5c2a:	7833      	ldrb	r3, [r6, #0]
+    5c2c:	7870      	ldrb	r0, [r6, #1]
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:319
   fprintf(stderr, "clock: %x \n", MP3Clock);
-    5c30:	4e3d      	ldr	r6, [pc, #244]	; (5d28 <main+0x2bc>)
+    5c2e:	4e3e      	ldr	r6, [pc, #248]	; (5d28 <main+0x2bc>)
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:312
   gpio__set(mp3cs); // deselect mp3 functionality
-    5c32:	ea43 2000 	orr.w	r0, r3, r0, lsl #8
-    5c36:	f7fc fd57 	bl	26e8 <gpio__set>
+    5c30:	ea43 2000 	orr.w	r0, r3, r0, lsl #8
+    5c34:	f7fc fd58 	bl	26e8 <gpio__set>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:314
   int MP3Mode = mp3read(0x00);
-    5c3a:	4620      	mov	r0, r4
-    5c3c:	f7ff fed8 	bl	59f0 <mp3read>
-    5c40:	4682      	mov	sl, r0
+    5c38:	4620      	mov	r0, r4
+    5c3a:	f7ff fed9 	bl	59f0 <mp3read>
+    5c3e:	4682      	mov	sl, r0
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:315
   int MP3Status = mp3read(0x01);
-    5c42:	4628      	mov	r0, r5
-    5c44:	f7ff fed4 	bl	59f0 <mp3read>
-    5c48:	4607      	mov	r7, r0
+    5c40:	4628      	mov	r0, r5
+    5c42:	f7ff fed5 	bl	59f0 <mp3read>
+    5c46:	4607      	mov	r7, r0
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:316
   int MP3Clock = mp3read(0x03);
-    5c4a:	2003      	movs	r0, #3
-    5c4c:	f7ff fed0 	bl	59f0 <mp3read>
+    5c48:	2003      	movs	r0, #3
+    5c4a:	f7ff fed1 	bl	59f0 <mp3read>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:319
   fprintf(stderr, "clock: %x \n", MP3Clock);
-    5c50:	6833      	ldr	r3, [r6, #0]
-    5c52:	4602      	mov	r2, r0
-    5c54:	4641      	mov	r1, r8
-    5c56:	68d8      	ldr	r0, [r3, #12]
-    5c58:	f000 fa60 	bl	611c <fiprintf>
+    5c4e:	6833      	ldr	r3, [r6, #0]
+    5c50:	4602      	mov	r2, r0
+    5c52:	4641      	mov	r1, r8
+    5c54:	68d8      	ldr	r0, [r3, #12]
+    5c56:	f000 fa61 	bl	611c <fiprintf>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:320
   fprintf(stderr, "mode: %x \n", MP3Mode);
-    5c5c:	6833      	ldr	r3, [r6, #0]
-    5c5e:	4652      	mov	r2, sl
-    5c60:	68d8      	ldr	r0, [r3, #12]
-    5c62:	4649      	mov	r1, r9
-    5c64:	f000 fa5a 	bl	611c <fiprintf>
+    5c5a:	6833      	ldr	r3, [r6, #0]
+    5c5c:	4652      	mov	r2, sl
+    5c5e:	68d8      	ldr	r0, [r3, #12]
+    5c60:	4649      	mov	r1, r9
+    5c62:	f000 fa5b 	bl	611c <fiprintf>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:322
 
   mp3write(0x00, 0x48, 0x10);
-    5c68:	2210      	movs	r2, #16
-    5c6a:	2148      	movs	r1, #72	; 0x48
-    5c6c:	4620      	mov	r0, r4
-    5c6e:	f7ff fe7d 	bl	596c <mp3write>
+    5c66:	2210      	movs	r2, #16
+    5c68:	2148      	movs	r1, #72	; 0x48
+    5c6a:	4620      	mov	r0, r4
+    5c6c:	f7ff fe7e 	bl	596c <mp3write>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:323
   MP3Mode = mp3read(0x00);
-    5c72:	4620      	mov	r0, r4
-    5c74:	f7ff febc 	bl	59f0 <mp3read>
+    5c70:	4620      	mov	r0, r4
+    5c72:	f7ff febd 	bl	59f0 <mp3read>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:326
 
   // mp3write(0x03, 0x88, 0x00); // clock
   mp3write(0x03, 0x60, 0x00);
-    5c78:	4622      	mov	r2, r4
-    5c7a:	2160      	movs	r1, #96	; 0x60
+    5c76:	4622      	mov	r2, r4
+    5c78:	2160      	movs	r1, #96	; 0x60
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:323
   MP3Mode = mp3read(0x00);
-    5c7c:	4683      	mov	fp, r0
+    5c7a:	4683      	mov	fp, r0
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:326
   mp3write(0x03, 0x60, 0x00);
-    5c7e:	2003      	movs	r0, #3
-    5c80:	f7ff fe74 	bl	596c <mp3write>
+    5c7c:	2003      	movs	r0, #3
+    5c7e:	f7ff fe75 	bl	596c <mp3write>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:327
   MP3Clock = mp3read(0x03);
-    5c84:	2003      	movs	r0, #3
-    5c86:	f7ff feb3 	bl	59f0 <mp3read>
-    5c8a:	4682      	mov	sl, r0
+    5c82:	2003      	movs	r0, #3
+    5c84:	f7ff feb4 	bl	59f0 <mp3read>
+    5c88:	4682      	mov	sl, r0
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:328
   ssp0__set_max_clock(6000); // increase spi clock
-    5c8c:	f241 7070 	movw	r0, #6000	; 0x1770
-    5c90:	f7fc ffda 	bl	2c48 <ssp0__set_max_clock>
+    5c8a:	f241 7070 	movw	r0, #6000	; 0x1770
+    5c8e:	f7fc ffdb 	bl	2c48 <ssp0__set_max_clock>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:331
 
   // reset();
   delay__ms(10);
-    5c94:	200a      	movs	r0, #10
-    5c96:	f7ff fc8c 	bl	55b2 <delay__ms>
+    5c92:	200a      	movs	r0, #10
+    5c94:	f7ff fc8d 	bl	55b2 <delay__ms>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:332
   xTaskCreate(mp3_reader_task, "reader", (4096 / sizeof(void *)), NULL, 1,
-    5c9a:	4623      	mov	r3, r4
-    5c9c:	e9cd 5400 	strd	r5, r4, [sp]
-    5ca0:	f44f 6280 	mov.w	r2, #1024	; 0x400
-    5ca4:	4921      	ldr	r1, [pc, #132]	; (5d2c <main+0x2c0>)
-    5ca6:	4822      	ldr	r0, [pc, #136]	; (5d30 <main+0x2c4>)
-    5ca8:	f7fb fbf8 	bl	149c <xTaskCreate>
+    5c98:	4623      	mov	r3, r4
+    5c9a:	e9cd 5400 	strd	r5, r4, [sp]
+    5c9e:	f44f 6280 	mov.w	r2, #1024	; 0x400
+    5ca2:	4922      	ldr	r1, [pc, #136]	; (5d2c <main+0x2c0>)
+    5ca4:	4822      	ldr	r0, [pc, #136]	; (5d30 <main+0x2c4>)
+    5ca6:	f7fb fbf9 	bl	149c <xTaskCreate>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:334
               NULL);
   xTaskCreate(mp3_player_task, "player", (4096 / sizeof(void *)), NULL, 2,
-    5cac:	2302      	movs	r3, #2
-    5cae:	9300      	str	r3, [sp, #0]
-    5cb0:	9401      	str	r4, [sp, #4]
-    5cb2:	4623      	mov	r3, r4
-    5cb4:	f44f 6280 	mov.w	r2, #1024	; 0x400
-    5cb8:	491e      	ldr	r1, [pc, #120]	; (5d34 <main+0x2c8>)
-    5cba:	481f      	ldr	r0, [pc, #124]	; (5d38 <main+0x2cc>)
-    5cbc:	f7fb fbee 	bl	149c <xTaskCreate>
+    5caa:	2302      	movs	r3, #2
+    5cac:	9300      	str	r3, [sp, #0]
+    5cae:	9401      	str	r4, [sp, #4]
+    5cb0:	4623      	mov	r3, r4
+    5cb2:	f44f 6280 	mov.w	r2, #1024	; 0x400
+    5cb6:	491f      	ldr	r1, [pc, #124]	; (5d34 <main+0x2c8>)
+    5cb8:	481f      	ldr	r0, [pc, #124]	; (5d38 <main+0x2cc>)
+    5cba:	f7fb fbef 	bl	149c <xTaskCreate>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:337
               NULL);
 
   fprintf(stderr, "mode: %x \n", MP3Mode);
-    5cc0:	6833      	ldr	r3, [r6, #0]
-    5cc2:	465a      	mov	r2, fp
-    5cc4:	4649      	mov	r1, r9
-    5cc6:	68d8      	ldr	r0, [r3, #12]
-    5cc8:	f000 fa28 	bl	611c <fiprintf>
+    5cbe:	6833      	ldr	r3, [r6, #0]
+    5cc0:	465a      	mov	r2, fp
+    5cc2:	4649      	mov	r1, r9
+    5cc4:	68d8      	ldr	r0, [r3, #12]
+    5cc6:	f000 fa29 	bl	611c <fiprintf>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:338
   fprintf(stderr, "status: %x \n", MP3Status);
-    5ccc:	6833      	ldr	r3, [r6, #0]
-    5cce:	491b      	ldr	r1, [pc, #108]	; (5d3c <main+0x2d0>)
-    5cd0:	68d8      	ldr	r0, [r3, #12]
-    5cd2:	463a      	mov	r2, r7
-    5cd4:	f000 fa22 	bl	611c <fiprintf>
+    5cca:	6833      	ldr	r3, [r6, #0]
+    5ccc:	491b      	ldr	r1, [pc, #108]	; (5d3c <main+0x2d0>)
+    5cce:	68d8      	ldr	r0, [r3, #12]
+    5cd0:	463a      	mov	r2, r7
+    5cd2:	f000 fa23 	bl	611c <fiprintf>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:339
   fprintf(stderr, "clock: %x \n", MP3Clock);
-    5cd8:	6833      	ldr	r3, [r6, #0]
-    5cda:	4652      	mov	r2, sl
-    5cdc:	4641      	mov	r1, r8
-    5cde:	68d8      	ldr	r0, [r3, #12]
-    5ce0:	f000 fa1c 	bl	611c <fiprintf>
+    5cd6:	6833      	ldr	r3, [r6, #0]
+    5cd8:	4652      	mov	r2, sl
+    5cda:	4641      	mov	r1, r8
+    5cdc:	68d8      	ldr	r0, [r3, #12]
+    5cde:	f000 fa1d 	bl	611c <fiprintf>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:340
   fprintf(stderr, "version: %x \n", version);
-    5ce4:	6833      	ldr	r3, [r6, #0]
-    5ce6:	4916      	ldr	r1, [pc, #88]	; (5d40 <main+0x2d4>)
-    5ce8:	68d8      	ldr	r0, [r3, #12]
-    5cea:	f3c7 1203 	ubfx	r2, r7, #4, #4
-    5cee:	f000 fa15 	bl	611c <fiprintf>
+    5ce2:	6833      	ldr	r3, [r6, #0]
+    5ce4:	4916      	ldr	r1, [pc, #88]	; (5d40 <main+0x2d4>)
+    5ce6:	68d8      	ldr	r0, [r3, #12]
+    5ce8:	f3c7 1203 	ubfx	r2, r7, #4, #4
+    5cec:	f000 fa16 	bl	611c <fiprintf>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:346
 
   // char *str = "hello";
@@ -20495,14 +20495,15 @@ C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\l
   // print_msg(str);
 
   vTaskStartScheduler();
-    5cf2:	f7fb fc79 	bl	15e8 <vTaskStartScheduler>
+    5cf0:	f7fb fc7a 	bl	15e8 <vTaskStartScheduler>
 C:\Users\scott\OneDrive\Documents\SJSU\20A_SP\CMPE146\mp3\mp3-project/projects\lpc40xx_freertos\l5_application/main.c:349
 
   return -1;
 }
-    5cf6:	f04f 30ff 	mov.w	r0, #4294967295
-    5cfa:	b003      	add	sp, #12
-    5cfc:	e8bd 8ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}
+    5cf4:	f04f 30ff 	mov.w	r0, #4294967295
+    5cf8:	b003      	add	sp, #12
+    5cfa:	e8bd 8ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}
+    5cfe:	bf00      	nop
     5d00:	0000cbc2 	.word	0x0000cbc2
     5d04:	00003381 	.word	0x00003381
     5d08:	10001424 	.word	0x10001424

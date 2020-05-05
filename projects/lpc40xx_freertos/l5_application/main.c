@@ -298,7 +298,7 @@ int main(void) {
 
   ssp0__exchange_byte(0xFF);
   gpio__set(rst);
-  delay__ms(5000);
+  delay__ms(50);
 
   mp3write(0x00, 0x88, 0x00); // output mode
   // mp3write(0x03, 0x60, 0x00); // output mode
