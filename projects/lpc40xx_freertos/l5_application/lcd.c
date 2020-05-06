@@ -5,7 +5,7 @@
 #include "i2c.h"
 #include "lpc40xx.h"
 #include <stdlib.h>
-
+/**
 void setReg(uint8_t addr, uint8_t dta) {
 
   i2c__write_single(I2C__2, RGB_ADDRESS, addr, dta);
@@ -79,6 +79,81 @@ void init_lcd() {
   setRGB(255, 255, 255);
   delay__ms(2000);
   setRGB(0, 0, 0);
+}
+**/
+uint8_t _displayfunction, _displaycontrol, _displaymode;
+
+void init() {
+
+  LPC_IOCON->P0_10 &= ~(3 << 3);
+  LPC_IOCON->P0_11 &= ~(3 << 3);
+
+  i2c__initialize(I2C__2, 97000, 96000000);
+
+  _displayfunction = FOURBITMODE | TWOLINE | FIVExEIGHTDOTS;
+  _displaycontrol = DISPLAYON | CURSOROFF | BLINKOFF;
+  _displaymode = ENTRYLEFT | ENTRYSHIFTDECREMENT;
+}
+
+void start() {
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x00, 0);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x01, 0);
+
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x08, 0xaa);
+
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x04, 0);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x03, 0);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x02, 0);
+
+  delay__ms(40);
+
+  _write4bits(0x03 << 4);
+
+  delay__ms(40);
+
+  _write4bits(0x03 << 4);
+
+  delay__ms(40);
+
+  _write4bits(0x03 << 4);
+  _write4bits(0x02 << 4);
+  _sendCommand(FUNCTIONSET | _displayfunction);
+
+  display_on();
+  clear();
+
+  _sendCommand(ENTRYMODESET | _displaymode);
+  home();
+}
+
+void clear() {
+  _sendCommand(CLEARDISPLAY);
+  delay__ms(50);
+}
+void home() { _sendCommand(RETURNHOME); }
+void display_on() {
+  _displaycontrol |= DISPLAYON;
+  _sendCommand(DISPLAYCONTROL | _displaycontrol);
+}
+
+void backlight_off() { backlight_color(0, 0, 0); }
+void backlight_on() { backlight_color(255, 255, 255); }
+void backlight_color(uint8_t red, uint8_t green, uint8_t blue) {
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x04, red);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x03, green);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x02, blue);
+}
+
+void _write4bits(uint8_t val) { _pulseEnable(val); }
+
+void _pulseEnable(uint8_t data) {
+  uint8_t a = data | En;
+  delay_ms(1);
+  uint8_t b = data & ~En;
+  delay_ms(50);
+}
+void _sendCommand(uint8_t value) {
+  i2c__write_single(I2C__2, DISPLAY_TEXT_ADDRESS, 0x80, value);
 }
 
 #endif

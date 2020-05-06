@@ -339,9 +339,10 @@ int main(void) {
   fprintf(stderr, "clock: %x \n", MP3Clock);
   fprintf(stderr, "version: %x \n", version);
 
-  // char *str = "hello";
-  // init_lcd();
-  // print_msg(str);
+  
+  // init();
+  // backlight_on();
+  // backlight_off();
 
   vTaskStartScheduler();
 

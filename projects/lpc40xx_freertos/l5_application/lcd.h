@@ -1,64 +1,73 @@
 #if 1
 #include <stdio.h>
 
-// Device I2C Arress
-#define LCD_ADDRESS (0x7c >> 1)
-#define RGB_ADDRESS (0xc4 >> 1)
+// i2c commands
+#define CLEARDISPLAY 0x01
+#define RETURNHOME 0x02
+#define ENTRYMODESET 0x04
+#define DISPLAYCONTROL 0x08
+#define CURSORSHIFT 0x10
+#define FUNCTIONSET 0x20
+#define SETCGRAMADDR 0x40
+#define SETDDRAMADDR 0x80
 
-// color define
-#define WHITE 0
-#define RED 1
-#define GREEN 2
-#define BLUE 3
+// Flags for display entry mode
+#define ENTRYRIGHT 0x00
+#define ENTRYLEFT 0x02
+#define ENTRYSHIFTINCREMENT 0x01
+#define ENTRYSHIFTDECREMENT 0x00
 
-#define REG_RED 0x04   // pwm2
-#define REG_GREEN 0x03 // pwm1
-#define REG_BLUE 0x02  // pwm0
+// Flags for display on/off control
+#define DISPLAYON 0x04
+#define DISPLAYOFF 0x00
+#define CURSORON 0x02
+#define CURSOROFF 0x00
+#define BLINKON 0x01
+#define BLINKOFF 0x00
 
-#define REG_MODE1 0x00
-#define REG_MODE2 0x01
-#define REG_OUTPUT 0x08
+// Flags for display/cursor shift
+#define DISPLAYMOVE 0x08
+#define CURSORMOVE 0x00
+#define MOVERIGHT 0x04
+#define MOVELEFT 0x00
 
-// commands
-#define LCD_CLEARDISPLAY 0x01
-#define LCD_RETURNHOME 0x02
-#define LCD_ENTRYMODESET 0x04
-#define LCD_DISPLAYCONTROL 0x08
-#define LCD_CURSORSHIFT 0x10
-#define LCD_FUNCTIONSET 0x20
-#define LCD_SETCGRAMADDR 0x40
-#define LCD_SETDDRAMADDR 0x80
+// Flags for function set
+#define EIGHTBITMODE 0x10
+#define FOURBITMODE 0x00
+#define TWOLINE 0x08
+#define ONELINE 0x00
+#define FIVExTENDOTS 0x04
+#define FIVExEIGHTDOTS 0x00
 
-// flags for display entry mode
-#define LCD_ENTRYRIGHT 0x00
-#define LCD_ENTRYLEFT 0x02
-#define LCD_ENTRYSHIFTINCREMENT 0x01
-#define LCD_ENTRYSHIFTDECREMENT 0x00
+#define En 0x04 // Enable bit
+#define Rw 0x02 // Read/Write bit
+#define Rs 0x01 // Register select bit
 
-// flags for display on/off control
-#define LCD_DISPLAYON 0x04
-#define LCD_DISPLAYOFF 0x00
-#define LCD_CURSORON 0x02
-#define LCD_CURSOROFF 0x00
-#define LCD_BLINKON 0x01
-#define LCD_BLINKOFF 0x00
+// I2C addresses for LCD and RGB backlight
+#define DISPLAY_COLOR_ADDRESS 0x62
+#define DISPLAY_TEXT_ADDRESS 0x3e
 
-// flags for display/cursor shift
-#define LCD_DISPLAYMOVE 0x08
-#define LCD_CURSORMOVE 0x00
-#define LCD_MOVERIGHT 0x04
-#define LCD_MOVELEFT 0x00
+void init();
+void start();
+void clear();
+void home();
+void set_cursor(uint8_t col, uint8_t row);
+void display_off();
+void display_on();
+void cursor_off();
+void cursor_on();
 
-// flags for function set
-#define LCD_8BITMODE 0x10
-#define LCD_4BITMODE 0x00
-#define LCD_2LINE 0x08
-#define LCD_1LINE 0x00
-#define LCD_5x10DOTS 0x04
-#define LCD_5x8DOTS 0x00
+void blink_off();
+void blink_on();
+void backlight_off();
+void backlight_on();
+void backlight_color(uint8_t red, uint8_t green, uint8_t blue);
+void print_string(char *characters);
 
-void init_lcd();
-
-void command(uint8_t value);
+void _write4bits(uint8_t val);
+void _pulseEnable(uint8_t data);
+void _sendCommand(uint8_t value);
+void _writeData(uint8_t value);
+void _sendData(uint8_t val, uint8_t mode);
 
 #endif
