@@ -1,6 +1,5 @@
 #include "FreeRTOS.h"
 #include "acceleration.h"
-#include "adc.h"
 #include "board_io.h"
 #include "common_macros.h"
 #include "event_groups.h"
@@ -19,7 +18,6 @@
 #include "semphr.h"
 #include "sj2_cli.h"
 #include "ssp0.h"
-#include "ssp1.h"
 #include "ssp2.h"
 #include "task.h"
 #include "uart_lab.h"
@@ -250,8 +248,21 @@ unsigned int mp3read(unsigned char addressbyte) {
   return resultvalue;
 }
 
+void lcd_task() {
+  init();
+  start();
+  // backlight_color(255, 0, 0);
+  // backlight_off();
+  // backlight_on();
+
+  while (1) {
+  }
+}
+
 int main(void) {
-  ssp2__initialize(24000);
+  printf("in main\n");
+  // vTaskDelay(1000);
+  /**ssp2__initialize(24000);
   xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1, NULL);
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
@@ -337,12 +348,17 @@ int main(void) {
   fprintf(stderr, "mode: %x \n", MP3Mode);
   fprintf(stderr, "status: %x \n", MP3Status);
   fprintf(stderr, "clock: %x \n", MP3Clock);
-  fprintf(stderr, "version: %x \n", version);
-
-  
+  fprintf(stderr, "version: %x \n", version);**/
+  xTaskCreate(lcd_task, "lcd", (4096 / sizeof(void *)), NULL, 1, NULL);
+  xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1, NULL);
+  // uint8_t value = 0x28;
+  // i2c__write_slave_data(I2C__2, 0xC4, 0x80, &value, 2);
   // init();
+  // start();
   // backlight_on();
   // backlight_off();
+
+  fprintf(stderr, "starting scheduler\n");
 
   vTaskStartScheduler();
 

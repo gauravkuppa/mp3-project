@@ -76,7 +76,7 @@ static void run_test(UnityTestFunction func, const char* name, int line_num)
 /*=======MAIN=====*/
 int main(void)
 {
-  UnityBegin("projects/lpc40xx_freertos/l4_io/cli/test/test_app_cli.c");
+  UnityBegin("projects\\lpc40xx_freertos\\l4_io\\cli\\test\\test_app_cli.c");
 
   return UnityEnd();
 }

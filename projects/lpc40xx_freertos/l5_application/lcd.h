@@ -46,6 +46,8 @@
 // I2C addresses for LCD and RGB backlight
 #define DISPLAY_COLOR_ADDRESS 0x62
 #define DISPLAY_TEXT_ADDRESS 0x3e
+#define DISPLAY_COLOR_ADDRESS_1 0x7C
+#define DISPLAY_TEXT_ADDRESS_1 0xC4
 
 void init();
 void start();
