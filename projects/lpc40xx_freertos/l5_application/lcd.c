@@ -35,10 +35,7 @@ void setRGB(unsigned char r, unsigned char g, unsigned char b) {
 void init_lcd() {
 
   LPC_IOCON->P0_10 &= ~(3 << 3);
-  LPC_IOCON->P0_11 &= ~(3 << 3);
-
-  i2c__initialize(I2C__2, 97000, 96000000);
-
+  LPC_IOCON->P0_11 &= ~(3 << 3);j w
   uint8_t _display;
   _display |= LCD_2LINE;
 
@@ -96,14 +93,14 @@ void init() {
 }
 
 void start() {
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x00, 0);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x01, 0);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x00, 0x00);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x01, 0x00);
 
   i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x08, 0xaa);
 
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x04, 0);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x03, 0);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x02, 0);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x04, 0x00);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x03, 0x00);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x02, 0x00);
 
   delay__ms(40);
 

@@ -24,7 +24,8 @@
         "i2c.h": "c",
         "cli_handlers.h": "c",
         "typeindex": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "cstring": "c"
     },
     "python.formatting.provider": "black"
 }
