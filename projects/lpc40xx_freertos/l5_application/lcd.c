@@ -86,7 +86,7 @@ void init() {
   // LPC_IOCON->P0_11 &= ~(3 << 3);
   gpio__construct_with_function(GPIO__PORT_0, 10, GPIO__FUNCTION_2);
   gpio__construct_with_function(GPIO__PORT_0, 11, GPIO__FUNCTION_2);
-  i2c__initialize(I2C__2, 97000, 96000000);
+  i2c__initialize(I2C__2, 1000000, 96000000); // 1 MHz clock SCL
 
   _displayfunction = FOURBITMODE | TWOLINE | FIVExEIGHTDOTS;
   _displaycontrol = DISPLAYON | CURSOROFF | BLINKOFF;
@@ -101,37 +101,83 @@ void start() {
 
   /****/
 
+  // vTaskDelay(50000);
+
+  // /**_write4bits(0x03 << 4);
+
+  // vTaskDelay(40);
+
+  // _write4bits(0x03 << 4);
+
+  // vTaskDelay(40);
+
+  // _write4bits(0x03 << 4);
+  // _write4bits(0x02 << 4);**/
+  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x00, 0, 2);
+  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x01, 0, 2);
+
+  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x08, 0xFF, 2);
+  // printf("%x\n", FUNCTIONSET | _displayfunction);
+  // _sendCommand(FUNCTIONSET | _displayfunction);
+  // vTaskDelay(4500);
+  // _sendCommand(FUNCTIONSET | _displayfunction);
+  // vTaskDelay(150);
+  // _sendCommand(FUNCTIONSET | _displayfunction);
+  // _sendCommand(FUNCTIONSET | _displayfunction);
+
+  // display_on();
+  // clear();
+
+  // _sendCommand(ENTRYMODESET | _displaymode);
+
+  // home();
+
+  // backlight_on();
+
   vTaskDelay(50000);
 
-  /**_write4bits(0x03 << 4);
+  // this is according to the hitachi HD44780 datasheet
+  // page 45 figure 23
 
-  vTaskDelay(40);
-
-  _write4bits(0x03 << 4);
-
-  vTaskDelay(40);
-
-  _write4bits(0x03 << 4);
-  _write4bits(0x02 << 4);**/
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x00, 0, 2);
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x01, 0, 2);
-
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x08, 0xFF, 2);
-  printf("%x\n", FUNCTIONSET | _displayfunction);
+  // Send function set command sequence
   _sendCommand(FUNCTIONSET | _displayfunction);
-  vTaskDelay(4500);
+  vTaskDelay(4500); // wait more than 4.1ms
+
+  // second try
   _sendCommand(FUNCTIONSET | _displayfunction);
   vTaskDelay(150);
-  _sendCommand(FUNCTIONSET | _displayfunction);
+
+  // third go
   _sendCommand(FUNCTIONSET | _displayfunction);
 
+  // finally, set # lines, font size, etc.
+  _sendCommand(FUNCTIONSET | _displayfunction);
+
+  // turn the display on with no cursor or blinking default
+  //_displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
   display_on();
+
+  // clear it off
   clear();
 
+  // Initialize to default text direction (for romance languages)
+  // _displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
+  // set the entry mode
   _sendCommand(ENTRYMODESET | _displaymode);
 
-  home();
+  // backlight init
+  i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x00, 0x00,
+                       2); // maybe change this to 0x01 for value
+  // setReg(REG_MODE1, 0);
+  // set LEDs controllable by both PWM and GRPPWM registers
+  i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x08, 0xFF, 2);
+  // setReg(REG_OUTPUT, 0xFF);
+  // set MODE2 values
+  // 0010 0000 -> 0x20  (DMBLNK to 1, ie blinky mode)
+  i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x01, 0x20, 2);
+  // setReg(REG_MODE2, 0x20);
 
+  // setColorWhite();
   backlight_on();
 }
 
@@ -148,9 +194,9 @@ void display_on() {
 void backlight_off() { backlight_color(0, 0, 0); }
 void backlight_on() { backlight_color(255, 255, 255); }
 void backlight_color(uint8_t red, uint8_t green, uint8_t blue) {
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x04, 0, 2);
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x03, 0, 2);
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x02, 0, 2);
+  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x04, 0, 2);
+  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x03, 0, 2);
+  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x02, 0, 2);
   i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x04, red, 2);
   i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x03, green, 2);
   i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x02, blue, 2);
