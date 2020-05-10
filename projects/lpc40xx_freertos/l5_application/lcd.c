@@ -18,7 +18,7 @@ void display(uint8_t _displaycontrol) {
 
 void clear() {
   command(LCD_CLEARDISPLAY); // clear display, set cursor position to zero
-  delay__ms(2000);           // this command takes a long time!
+  vTaskDelay(2000);           // this command takes a long time!
 }
 
 void command(uint8_t value) {
@@ -39,14 +39,14 @@ void init_lcd() {
   uint8_t _display;
   _display |= LCD_2LINE;
 
-  delay__ms(50000);
+  vTaskDelay(50000);
 
   command(LCD_FUNCTIONSET | _display);
-  delay__ms(4500); // wait more than 4.1ms
+  vTaskDelay(4500); // wait more than 4.1ms
 
   // second try
   command(LCD_FUNCTIONSET | _display);
-  delay__ms(150);
+  vTaskDelay(150);
 
   // third go
   command(LCD_FUNCTIONSET | _display);
@@ -74,7 +74,7 @@ void init_lcd() {
   setReg(REG_MODE2, 0x20);
 
   setRGB(255, 255, 255);
-  delay__ms(2000);
+  vTaskDelay(2000);
   setRGB(0, 0, 0);
 }
 **/
@@ -82,9 +82,10 @@ uint8_t _displayfunction, _displaycontrol, _displaymode;
 
 void init() {
 
-  LPC_IOCON->P0_10 &= ~(3 << 3);
-  LPC_IOCON->P0_11 &= ~(3 << 3);
-
+  // LPC_IOCON->P0_10 &= ~(3 << 3);
+  // LPC_IOCON->P0_11 &= ~(3 << 3);
+  gpio__construct_with_function(GPIO__PORT_0, 10, GPIO__FUNCTION_2);
+  gpio__construct_with_function(GPIO__PORT_0, 11, GPIO__FUNCTION_2);
   i2c__initialize(I2C__2, 97000, 96000000);
 
   _displayfunction = FOURBITMODE | TWOLINE | FIVExEIGHTDOTS;
@@ -93,39 +94,50 @@ void init() {
 }
 
 void start() {
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x00, 0x00);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x01, 0x00);
+  /**i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x00, 0);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x01, 0);
 
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x08, 0xaa);
+  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x08, 0xFF);**/
 
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x04, 0x00);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x03, 0x00);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x02, 0x00);
+  /****/
 
-  delay__ms(40);
+  vTaskDelay(50000);
 
-  _write4bits(0x03 << 4);
+  /**_write4bits(0x03 << 4);
 
-  delay__ms(40);
+  vTaskDelay(40);
 
   _write4bits(0x03 << 4);
 
-  delay__ms(40);
+  vTaskDelay(40);
 
   _write4bits(0x03 << 4);
-  _write4bits(0x02 << 4);
+  _write4bits(0x02 << 4);**/
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x00, 0, 2);
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x01, 0, 2);
+
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x08, 0xFF, 2);
+  printf("%x\n", FUNCTIONSET | _displayfunction);
+  _sendCommand(FUNCTIONSET | _displayfunction);
+  vTaskDelay(4500);
+  _sendCommand(FUNCTIONSET | _displayfunction);
+  vTaskDelay(150);
+  _sendCommand(FUNCTIONSET | _displayfunction);
   _sendCommand(FUNCTIONSET | _displayfunction);
 
   display_on();
   clear();
 
   _sendCommand(ENTRYMODESET | _displaymode);
+
   home();
+
+  backlight_on();
 }
 
 void clear() {
   _sendCommand(CLEARDISPLAY);
-  delay__ms(50);
+  vTaskDelay(50);
 }
 void home() { _sendCommand(RETURNHOME); }
 void display_on() {
@@ -136,21 +148,24 @@ void display_on() {
 void backlight_off() { backlight_color(0, 0, 0); }
 void backlight_on() { backlight_color(255, 255, 255); }
 void backlight_color(uint8_t red, uint8_t green, uint8_t blue) {
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x04, red);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x03, green);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x02, blue);
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x04, 0, 2);
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x03, 0, 2);
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x02, 0, 2);
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x04, red, 2);
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x03, green, 2);
+  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x02, blue, 2);
 }
 
 void _write4bits(uint8_t val) { _pulseEnable(val); }
 
 void _pulseEnable(uint8_t data) {
   uint8_t a = data | En;
-  delay_ms(1);
+  vTaskDelay(1);
   uint8_t b = data & ~En;
-  delay_ms(50);
+  vTaskDelay(50);
 }
 void _sendCommand(uint8_t value) {
-  i2c__write_single(I2C__2, DISPLAY_TEXT_ADDRESS, 0x80, value);
+  i2c__write_slave_data(I2C__2, DISPLAY_TEXT_ADDRESS_1, 0x80, &value, 2);
 }
 
 #endif
