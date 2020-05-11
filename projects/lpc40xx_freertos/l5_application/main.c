@@ -33,6 +33,8 @@ typedef uint8_t mp3_data_blocks[512];
 QueueHandle_t Q_songname;
 QueueHandle_t Q_songdata;
 
+xSemaphoreHandle_t spi_sem;
+
 static QueueHandle_t sensor_data_queue;
 static EventGroupHandle_t xEventGroup;
 static EventBits_t uxBits;
@@ -69,7 +71,77 @@ bool i2c_slave_callback__write_memory(uint8_t memory_index,
 
   return status;
 }
+// Song list populate
+// typedef char song_memory_t[128];
+// static song_memory_t list_of_songs[32];
+// static size_t number_of_songs;
 
+// static void song_list__handle_filename(const char *filename) {
+//   // This will not work for cases like "file.mp3.zip"
+//   if (NULL != strstr(filename, ".mp3")) {
+//     // printf("Filename: %s\n", filename);
+
+//     // Dangerous function: If filename is > 128 chars, then it will copy
+//     extra
+//     // bytes leading to memory corruption
+//     strcpy(list_of_songs[number_of_songs],
+//     // filename);
+
+//     // Better: But strncpy() does not guarantee to copy null char if max
+//     length
+//     // encountered So we can manually subtract 1 to reserve as NULL char
+//     strncpy(list_of_songs[number_of_songs], filename,
+//             sizeof(song_memory_t) - 1);
+
+//     // Best: Compensates for the null, so if 128 char filename, then it
+//     copies
+//     // 127 chars, AND the NULL char snprintf(list_of_songs[number_of_songs],
+//     // sizeof(song_memory_t), "%.149s", filename);
+
+//     ++number_of_songs;
+//     // or
+//     // number_of_songs++;
+//   }
+// }
+
+// void song_list__populate(void) {
+//   FRESULT res;
+//   static FILINFO file_info;
+//   const char *root_path = "/";
+
+//   DIR dir;
+//   res = f_opendir(&dir, root_path);
+
+//   if (res == FR_OK) {
+//     for (;;) {
+//       res = f_readdir(&dir, &file_info); /* Read a directory item */
+//       if (res != FR_OK || file_info.fname[0] == 0) {
+//         break; /* Break on error or end of dir */
+//       }
+
+//       if (file_info.fattrib & AM_DIR) {
+//         /* Skip nested directories, only focus on MP3 songs at the root */
+//       } else { /* It is a file. */
+//         song_list__handle_filename(file_info.fname);
+//       }
+//     }
+//     f_closedir(&dir);
+//   }
+// }
+
+// size_t song_list__get_item_count(void) { return number_of_songs; }
+
+// const char *song_list__get_name_for_item(size_t item_number) {
+//   const char *return_pointer = "";
+
+//   if (item_number >= number_of_songs) {
+//     return_pointer = "";
+//   } else {
+//     return_pointer = list_of_songs[item_number];
+//   }
+
+//   return return_pointer;
+// }
 void uart_read_task(void *p) {
   while (1) {
     // TODO: Use uart_lab__polled_get() function and printf the received value
@@ -151,7 +223,7 @@ void mp3_player_task(void *p) {
 
     if (xQueueReceive(Q_songdata, &mp3_data_block[0], portMAX_DELAY)) {
       // printf("recieved song data: %d\n", sizeof(mp3_data_block));
-
+      // xSemaphoreGive(spi_sem);
       gpio__reset(xdcs); // set xdcs low
 
       // fprintf(stderr, "size: %d \n", sizeof(mp3_data_block));
@@ -161,24 +233,23 @@ void mp3_player_task(void *p) {
         while (!gpio__get(dreq)) {
           printf("waiting for dreq\n");
         }
-
         for (int j = (i * 32); j < (i * 32) + 32; j++) {
           ssp0__exchange_byte(*(mp3_data_block + j));
         }
-        // fprintf(stderr, " %d ", j);
-
-        // fprintf(stderr, "\n");
-
-        // ssp2__dma_write_block(bytes_512[i], 512);
-        // spi_send_to_mp3_decoder(mp3_data_block[i]);
       }
-
       gpio__set(xdcs); // set xdcs high
-
+      // xSemaphoreTake(spi_sem);
       // printf("out\n");
     }
   }
 }
+// void volume_task(void *p){
+
+
+
+
+
+// }
 // Used to initialize the decoder
 
 void decoder_init(uint8_t address, uint16_t value) {
@@ -251,6 +322,8 @@ unsigned int mp3read(unsigned char addressbyte) {
 void lcd_task() {
   init();
   start();
+  char *s = "hello";
+  print_string(s);
   // backlight_color(255, 0, 0);
   // backlight_off();
   // backlight_on();
@@ -261,6 +334,11 @@ void lcd_task() {
 
 int main(void) {
   printf("in main\n");
+  //printf("populating songs...\n");
+  //song_list__populate();
+  //for (size_t song_number = 0; song_number < song_list__get_item_count(); song_number++) {
+  //  printf("Song %2d: %s\n", (1 + song_number), song_list__get_name_for_item(song_number));
+  //}
   // vTaskDelay(1000);
   /**ssp2__initialize(24000);
   xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1, NULL);

@@ -86,10 +86,10 @@ void init() {
   // LPC_IOCON->P0_11 &= ~(3 << 3);
   gpio__construct_with_function(GPIO__PORT_0, 10, GPIO__FUNCTION_2);
   gpio__construct_with_function(GPIO__PORT_0, 11, GPIO__FUNCTION_2);
-  i2c__initialize(I2C__2, 1000000, 96000000); // 1 MHz clock SCL
+  i2c__initialize(I2C__2, 97000, 96000000);
 
   _displayfunction = FOURBITMODE | TWOLINE | FIVExEIGHTDOTS;
-  _displaycontrol = DISPLAYON | CURSOROFF | BLINKOFF;
+  _displaycontrol = DISPLAYON | CURSORON | BLINKON;
   _displaymode = ENTRYLEFT | ENTRYSHIFTDECREMENT;
 }
 
@@ -212,6 +212,37 @@ void _pulseEnable(uint8_t data) {
 }
 void _sendCommand(uint8_t value) {
   i2c__write_slave_data(I2C__2, DISPLAY_TEXT_ADDRESS_1, 0x80, &value, 2);
+}
+
+void print_string(char *characters) {
+
+  _sendCommand(0x08 | 0x04); // display on, no cursor
+  _sendCommand(0x28);        // 2 lines
+  vTaskDelay(500);
+  int count = 0;
+  int row = 0;
+
+  size_t length = strlen(characters);
+  size_t i;
+  for (i = 0; i < length; i++) {
+    char c = characters[i];
+    if (strcmp(c, '\n')) {
+      count = 0;
+      row = 1;
+      _sendCommand(0xc0);
+      continue;
+    }
+    if (count == 16 && row == 0) {
+      _sendCommand(0xc0);
+      row += 1;
+    }
+    count += 1;
+    uint8_t c_int = c;
+    i2c__write_slave_data(I2C__2, DISPLAY_TEXT_ADDRESS_1, 0x40, c_int, 2);
+    // printf("%c\n", characters[i]);    /* Print each character of the
+    // string.
+    // */
+  }
 }
 
 #endif
