@@ -1,3 +1,4 @@
+#if 1
 #include "gpio.h"
 #include "i2c.h"
 #include "lpc40xx.h"
@@ -12,3 +13,5 @@ void led_up(int index);
 void led_down(int index);
 void write_8_bit_mode(uint8_t command, uint8_t rs_value);
 void pulse_clock(uint8_t delay);
+
+#endif
