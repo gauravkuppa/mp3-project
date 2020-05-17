@@ -166,8 +166,7 @@ void start() {
   _sendCommand(ENTRYMODESET | _displaymode);
 
   // backlight init
-  i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x00, 0x00,
-                       2); // maybe change this to 0x01 for value
+  i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x00, 0x00, 2); // maybe change this to 0x01 for value
   // setReg(REG_MODE1, 0);
   // set LEDs controllable by both PWM and GRPPWM registers
   i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x08, 0xFF, 2);
