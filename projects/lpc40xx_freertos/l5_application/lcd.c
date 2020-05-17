@@ -2,6 +2,7 @@
 #include "delay.h"
 #include "gpio.h"
 #include <stdlib.h>
+#include <string.h>
 
 // #define EN (1 << 0)
 // #define RW (1 << 2)
@@ -14,7 +15,7 @@
 gpio_s LCD_EN, LCD_RS, LCD_D0, LCD_D1, LCD_D2, LCD_D3, LCD_D4, LCD_D5, LCD_D6,
     LCD_D7;
 
-void init_lcd() {
+void lcd_init() {
   // Init pins to 0:
   LCD_EN = gpio__construct_as_output(GPIO__PORT_2, 0);
   LCD_RS = gpio__construct_as_output(GPIO__PORT_2, 5);
@@ -38,6 +39,72 @@ void init_lcd() {
   write_8_bit_mode(0x0E, 0); // display on/off 0b00001111
 
   write_8_bit_mode(0x01, 0); // clear 0b00000001
+}
+
+void lcd_write_char(char c) { write_8_bit_mode((uint8_t)c, 1); }
+
+void lcd_write_string(char *s) {
+  int len = strlen(s);
+  for (int i = 0; i < len; i++) {
+    lcd_write_char(s[i]);
+  }
+}
+
+void lcd_clear_display() { write_8_bit_mode(0x01, 0); }
+
+void lcd_set_cursor(int row, int col) {
+  uint8_t position = (col + (row * 40)) + 0x80;
+  write_8_bit_mode(position, 0);
+}
+
+void led_up(int index) {
+  /*
+     _____________________________________________
+    |                                            |
+    |         song_i.mp3                         |
+    |                                            |
+    |         song_i+1.mp                        |
+    |                                            |
+    |____________________________________________|
+
+    to
+     _____________________________________________
+    |                                            |
+    |         song_i+1.mp3                       |
+    |                                            |
+    |         song_i+2.mp                        |
+    |                                            |
+    |____________________________________________|
+
+
+  */
+
+  // check edge conditions
+}
+
+void led_down(int index) {
+  /*
+     _____________________________________________
+    |                                            |
+    |         song_i.mp3                         |
+    |                                            |
+    |         song_i+1.mp3                        |
+    |                                            |
+    |____________________________________________|
+
+    to
+     _____________________________________________
+    |                                            |
+    |         song_i-1.mp3                       |
+    |                                            |
+    |         song_i.mp3                         |
+    |                                            |
+    |____________________________________________|
+
+
+  */
+
+  // check edge conditions
 }
 
 void write_8_bit_mode(uint8_t command, uint8_t rs_value) {
@@ -111,12 +178,4 @@ void pulse_clock(uint8_t delay) {
   vTaskDelay(delay);
   gpio__reset(LCD_EN);
   vTaskDelay(delay);
-}
-
-void print_msg(char *write) {
-  while (*write != '\0') // Print characters until end of line
-  {
-    write_8_bit_mode((uint8_t)atoi(write), 1);
-    write++;
-  }
 }

@@ -215,7 +215,7 @@ static void run_test(UnityTestFunction func, const char* name, int line_num)
 /*=======MAIN=====*/
 int main(void)
 {
-  UnityBegin("projects\\lpc40xx_freertos\\l2_utils\\string\\test\\test_sl_string.c");
+  UnityBegin("projects/lpc40xx_freertos/l2_utils/string/test/test_sl_string.c");
   run_test(test_sl_string__initialize_successful, "test_sl_string__initialize_successful", 87);
   run_test(test_sl_string__initialize_unsuccessful_null_mem, "test_sl_string__initialize_unsuccessful_null_mem", 93);
   run_test(test_sl_string__initialize_unsuccessful_mem_size_zero, "test_sl_string__initialize_unsuccessful_mem_size_zero", 100);

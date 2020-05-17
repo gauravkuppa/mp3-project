@@ -495,7 +495,7 @@ void lcd_task() {
   // initialize_lcd_pins();
   // initialize_lcd_screen();
   // printf("finished init\n");
-  init_lcd();
+  lcd_init();
   // init();
   // start();
   //
