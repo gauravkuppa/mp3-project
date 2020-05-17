@@ -1,4 +1,8 @@
 #if 1
+#include "delay.h"
+#include "gpio.h"
+#include "i2c.h"
+#include "lpc40xx.h"
 #include <stdio.h>
 
 // i2c commands
@@ -71,5 +75,35 @@ void _pulseEnable(uint8_t data);
 void _sendCommand(uint8_t value);
 void _writeData(uint8_t value);
 void _sendData(uint8_t val, uint8_t mode);
+
+// trial code
+static void lcd__clock_pulse(void);
+
+static void lcd__set_databits(uint8_t value);
+
+void lcd__write_value(uint8_t value);
+
+void lcd__write_character(char c);
+
+void lcd__clear_display(void);
+
+void lcd__write_name(const char *name);
+
+void lcd__write_continue(const char *value);
+
+void initialize_lcd_pins(void);
+
+void initialize_lcd_screen(void);
+
+void lcd__set_cursor_position(uint8_t row, uint8_t col);
+
+void lcd__cursor_move_left(void);
+
+void lcd__cursor_move_right(void);
+
+void lcd__show_levels(uint8_t volume_level, uint8_t treble_level,
+                      uint8_t bass_level);
+
+void lcd__write_digit(uint8_t digit);
 
 #endif

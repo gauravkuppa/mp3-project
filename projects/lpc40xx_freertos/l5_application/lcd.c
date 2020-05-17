@@ -1,216 +1,122 @@
-#if 1
 #include "lcd.h"
 #include "delay.h"
 #include "gpio.h"
-#include "i2c.h"
-#include "lpc40xx.h"
 #include <stdlib.h>
-/**
-void setReg(uint8_t addr, uint8_t dta) {
 
-  i2c__write_single(I2C__2, RGB_ADDRESS, addr, dta);
-}
+// #define EN (1 << 0)
+// #define RW (1 << 2)
+// #define RS (1 << 5)
+// #define DB4 (1 << 1)
+// #define DB5 (1 << 4)
+// #define DB6 (1 << 6)
+// #define DB7 (1 << 8)
 
-void display(uint8_t _displaycontrol) {
-  _displaycontrol |= LCD_DISPLAYON;
-  command(LCD_DISPLAYCONTROL | _displaycontrol);
-}
+gpio_s LCD_EN, LCD_RS, LCD_D0, LCD_D1, LCD_D2, LCD_D3, LCD_D4, LCD_D5, LCD_D6,
+    LCD_D7;
 
-void clear() {
-  command(LCD_CLEARDISPLAY); // clear display, set cursor position to zero
-  vTaskDelay(2000);           // this command takes a long time!
-}
-
-void command(uint8_t value) {
-  // unsigned char dta[2] = {0x80, value};
-  i2c__write_single(I2C__2, LCD_ADDRESS, 0x80, value); //?????????
-  // i2c_send_byteS(dta, 2);
-}
-
-void setRGB(unsigned char r, unsigned char g, unsigned char b) {
-  setReg(REG_RED, r);
-  setReg(REG_GREEN, g);
-  setReg(REG_BLUE, b);
-}
 void init_lcd() {
+  // Init pins to 0:
+  LCD_EN = gpio__construct_as_output(GPIO__PORT_2, 0);
+  LCD_RS = gpio__construct_as_output(GPIO__PORT_2, 5);
 
-  LPC_IOCON->P0_10 &= ~(3 << 3);
-  LPC_IOCON->P0_11 &= ~(3 << 3);j w
-  uint8_t _display;
-  _display |= LCD_2LINE;
+  LCD_D0 = gpio__construct_as_output(GPIO__PORT_0, 16);
+  LCD_D1 = gpio__construct_as_output(GPIO__PORT_0, 17);
+  LCD_D2 = gpio__construct_as_output(GPIO__PORT_0, 22);
+  LCD_D3 = gpio__construct_as_output(GPIO__PORT_0, 0);
+  LCD_D4 = gpio__construct_as_output(GPIO__PORT_2, 1);
+  LCD_D5 = gpio__construct_as_output(GPIO__PORT_2, 4);
+  LCD_D6 = gpio__construct_as_output(GPIO__PORT_2, 6);
+  LCD_D7 = gpio__construct_as_output(GPIO__PORT_2, 8);
 
-  vTaskDelay(50000);
+  write_8_bit_mode(0b00110000, 0);
+  write_8_bit_mode(0b00110000, 0);
+  write_8_bit_mode(0b00110000, 0);
 
-  command(LCD_FUNCTIONSET | _display);
-  vTaskDelay(4500); // wait more than 4.1ms
+  write_8_bit_mode(0x38, 0); // function set 0b00111000
+  // write_8_bit_mode(0b00000001, 0);
+  write_8_bit_mode(0x06, 0); // entry mode set 0b00000110
+  write_8_bit_mode(0x0E, 0); // display on/off 0b00001111
 
-  // second try
-  command(LCD_FUNCTIONSET | _display);
-  vTaskDelay(150);
-
-  // third go
-  command(LCD_FUNCTIONSET | _display);
-
-  // finally, set # lines, font size, etc.
-  command(LCD_FUNCTIONSET | _display);
-
-  uint8_t _displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
-  display(_displaycontrol);
-
-  // clear it off
-  clear();
-
-  // Initialize to default text direction (for romance languages)
-  uint8_t _displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
-  // set the entry mode
-  command(LCD_ENTRYMODESET | _displaymode);
-
-  // backlight init
-  setReg(REG_MODE1, 0);
-  // set LEDs controllable by both PWM and GRPPWM registers
-  setReg(REG_OUTPUT, 0xFF);
-  // set MODE2 values
-  // 0010 0000 -> 0x20  (DMBLNK to 1, ie blinky mode)
-  setReg(REG_MODE2, 0x20);
-
-  setRGB(255, 255, 255);
-  vTaskDelay(2000);
-  setRGB(0, 0, 0);
-}
-**/
-uint8_t _displayfunction, _displaycontrol, _displaymode;
-
-void init() {
-
-  // LPC_IOCON->P0_10 &= ~(3 << 3);
-  // LPC_IOCON->P0_11 &= ~(3 << 3);
-  gpio__construct_with_function(GPIO__PORT_0, 10, GPIO__FUNCTION_2);
-  gpio__construct_with_function(GPIO__PORT_0, 11, GPIO__FUNCTION_2);
-  i2c__initialize(I2C__2, 1000000, 96000000); // 1 MHz clock SCL
-
-  _displayfunction = FOURBITMODE | TWOLINE | FIVExEIGHTDOTS;
-  _displaycontrol = DISPLAYON | CURSOROFF | BLINKOFF;
-  _displaymode = ENTRYLEFT | ENTRYSHIFTDECREMENT;
+  write_8_bit_mode(0x01, 0); // clear 0b00000001
 }
 
-void start() {
-  /**i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x00, 0);
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x01, 0);
+void write_8_bit_mode(uint8_t command, uint8_t rs_value) {
+  // bool gpio__get(gpio_s gpio);
+  // void gpio__set(gpio_s gpio);   ///< Sets the pin value as 'high' -> 3.3v
+  // void gpio__reset(gpio_s gpio); ///< Sets the pin value as 'low' -> ground
+  // void gpio__toggle(gpio_s gpio);
 
-  i2c__write_single(I2C__2, DISPLAY_COLOR_ADDRESS, 0x08, 0xFF);**/
+  if (rs_value) {
+    gpio__set(LCD_RS);
+  } else {
+    gpio__reset(LCD_RS);
+  }
 
-  /****/
+  // time.sleep()
 
-  // vTaskDelay(50000);
+  if (command >> 0 & 1) {
+    gpio__set(LCD_D0);
+  } else {
+    gpio__reset(LCD_D0);
+  }
 
-  // /**_write4bits(0x03 << 4);
+  if (command >> 1 & 1) {
+    gpio__set(LCD_D1);
+  } else {
+    gpio__reset(LCD_D1);
+  }
 
-  // vTaskDelay(40);
+  if (command >> 2 & 1) {
+    gpio__set(LCD_D2);
+  } else {
+    gpio__reset(LCD_D2);
+  }
 
-  // _write4bits(0x03 << 4);
+  if (command >> 3 & 1) {
+    gpio__set(LCD_D3);
+  } else {
+    gpio__reset(LCD_D3);
+  }
 
-  // vTaskDelay(40);
+  if (command >> 4 & 1) {
+    gpio__set(LCD_D4);
+  } else {
+    gpio__reset(LCD_D4);
+  }
 
-  // _write4bits(0x03 << 4);
-  // _write4bits(0x02 << 4);**/
-  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x00, 0, 2);
-  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x01, 0, 2);
+  if (command >> 5 & 1) {
+    gpio__set(LCD_D5);
+  } else {
+    gpio__reset(LCD_D5);
+  }
 
-  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x08, 0xFF, 2);
-  // printf("%x\n", FUNCTIONSET | _displayfunction);
-  // _sendCommand(FUNCTIONSET | _displayfunction);
-  // vTaskDelay(4500);
-  // _sendCommand(FUNCTIONSET | _displayfunction);
-  // vTaskDelay(150);
-  // _sendCommand(FUNCTIONSET | _displayfunction);
-  // _sendCommand(FUNCTIONSET | _displayfunction);
+  if (command >> 6 & 1) {
+    gpio__set(LCD_D6);
+  } else {
+    gpio__reset(LCD_D6);
+  }
 
-  // display_on();
-  // clear();
+  if (command >> 7 & 1) {
+    gpio__set(LCD_D7);
+  } else {
+    gpio__reset(LCD_D7);
+  }
 
-  // _sendCommand(ENTRYMODESET | _displaymode);
-
-  // home();
-
-  // backlight_on();
-
-  vTaskDelay(50000);
-
-  // this is according to the hitachi HD44780 datasheet
-  // page 45 figure 23
-
-  // Send function set command sequence
-  _sendCommand(FUNCTIONSET | _displayfunction);
-  vTaskDelay(4500); // wait more than 4.1ms
-
-  // second try
-  _sendCommand(FUNCTIONSET | _displayfunction);
-  vTaskDelay(150);
-
-  // third go
-  _sendCommand(FUNCTIONSET | _displayfunction);
-
-  // finally, set # lines, font size, etc.
-  _sendCommand(FUNCTIONSET | _displayfunction);
-
-  // turn the display on with no cursor or blinking default
-  //_displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
-  display_on();
-
-  // clear it off
-  clear();
-
-  // Initialize to default text direction (for romance languages)
-  // _displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
-  // set the entry mode
-  _sendCommand(ENTRYMODESET | _displaymode);
-
-  // backlight init
-  i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x00, 0x00, 2); // maybe change this to 0x01 for value
-  // setReg(REG_MODE1, 0);
-  // set LEDs controllable by both PWM and GRPPWM registers
-  i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x08, 0xFF, 2);
-  // setReg(REG_OUTPUT, 0xFF);
-  // set MODE2 values
-  // 0010 0000 -> 0x20  (DMBLNK to 1, ie blinky mode)
-  i2c__read_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x01, 0x20, 2);
-  // setReg(REG_MODE2, 0x20);
-
-  // setColorWhite();
-  backlight_on();
+  pulse_clock(100);
 }
 
-void clear() {
-  _sendCommand(CLEARDISPLAY);
-  vTaskDelay(50);
-}
-void home() { _sendCommand(RETURNHOME); }
-void display_on() {
-  _displaycontrol |= DISPLAYON;
-  _sendCommand(DISPLAYCONTROL | _displaycontrol);
+void pulse_clock(uint8_t delay) {
+  vTaskDelay(delay);
+  gpio__set(LCD_EN);
+  vTaskDelay(delay);
+  gpio__reset(LCD_EN);
+  vTaskDelay(delay);
 }
 
-void backlight_off() { backlight_color(0, 0, 0); }
-void backlight_on() { backlight_color(255, 255, 255); }
-void backlight_color(uint8_t red, uint8_t green, uint8_t blue) {
-  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x04, 0, 2);
-  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x03, 0, 2);
-  // i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x02, 0, 2);
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x04, red, 2);
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x03, green, 2);
-  i2c__write_slave_data(I2C__2, DISPLAY_COLOR_ADDRESS_1, 0x02, blue, 2);
+void print_msg(char *write) {
+  while (*write != '\0') // Print characters until end of line
+  {
+    write_8_bit_mode((uint8_t)atoi(write), 1);
+    write++;
+  }
 }
-
-void _write4bits(uint8_t val) { _pulseEnable(val); }
-
-void _pulseEnable(uint8_t data) {
-  uint8_t a = data | En;
-  vTaskDelay(1);
-  uint8_t b = data & ~En;
-  vTaskDelay(50);
-}
-void _sendCommand(uint8_t value) {
-  i2c__write_slave_data(I2C__2, DISPLAY_TEXT_ADDRESS_1, 0x80, &value, 2);
-}
-
-#endif
