@@ -21,7 +21,7 @@ void lcd_init() {
   LCD_RS = gpio__construct_as_output(GPIO__PORT_2, 5);
 
   LCD_D0 = gpio__construct_as_output(GPIO__PORT_0, 16);
-  LCD_D1 = gpio__construct_as_output(GPIO__PORT_0, 17);
+  LCD_D1 = gpio__construct_as_output(GPIO__PORT_2, 7);
   LCD_D2 = gpio__construct_as_output(GPIO__PORT_0, 22);
   LCD_D3 = gpio__construct_as_output(GPIO__PORT_0, 0);
   LCD_D4 = gpio__construct_as_output(GPIO__PORT_2, 1);
@@ -57,7 +57,7 @@ void lcd_set_cursor(int row, int col) {
   write_8_bit_mode(position, 0);
 }
 
-void led_up(int index) {
+void lcd_up(song_memory_t *arr, int index) {
   /*
      _____________________________________________
     |                                            |
@@ -79,10 +79,33 @@ void led_up(int index) {
 
   */
 
-  // check edge conditions
+  // check edge conditions !!!!
+  index++;
+  printf("From LCD up: %s\n", arr[0]);
+  printf("From LCD up: %s\n", arr[1]);
+
+  lcd_clear_display();
+  lcd_set_cursor(0, 0);
+  lcd_write_string(arr[index]);
+  lcd_set_cursor(1, 0);
+  lcd_write_string(arr[index + 1]);
 }
 
-void led_down(int index) {
+void lcd_build_menu(songname_t *arr) {
+  for (int i = 0; i < 4; i++) {
+    printf("in lcd_task, print options: %s\n", (&arr[i]));
+  }
+
+  int index = 0;
+  printf("From LCD up: %s\n", arr);
+  printf("From LCD up: %s\n", (arr + 1));
+  lcd_clear_display();
+  lcd_set_cursor(0, 0);
+  lcd_write_string(arr[index]);
+  lcd_set_cursor(1, 0);
+  lcd_write_string(arr[index + 1]);
+}
+void lcd_down(song_memory_t *arr, int index) {
   /*
      _____________________________________________
     |                                            |
@@ -104,7 +127,17 @@ void led_down(int index) {
 
   */
 
-  // check edge conditions
+  // check edge conditions !!!!!!
+
+  index--;
+  printf("From LCD up: %s\n", arr[0]);
+  printf("From LCD up: %s\n", arr[1]);
+
+  lcd_clear_display();
+  lcd_set_cursor(0, 0);
+  lcd_write_string(arr[index]);
+  lcd_set_cursor(1, 0);
+  lcd_write_string(arr[index + 1]);
 }
 
 void write_8_bit_mode(uint8_t command, uint8_t rs_value) {
@@ -169,7 +202,7 @@ void write_8_bit_mode(uint8_t command, uint8_t rs_value) {
     gpio__reset(LCD_D7);
   }
 
-  pulse_clock(100);
+  pulse_clock(10);
 }
 
 void pulse_clock(uint8_t delay) {
