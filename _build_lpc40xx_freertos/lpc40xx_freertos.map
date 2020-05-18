@@ -3264,7 +3264,7 @@ END GROUP
                 0x1000115b                bass
  .bss.cursor    0x1000115c        0x4 _build_lpc40xx_freertos\obj\main.o
                 0x1000115c                cursor
- .bss.file_info.9601
+ .bss.file_info.9602
                 0x10001160       0x98 _build_lpc40xx_freertos\obj\main.o
  .bss.in_song   0x100011f8        0x1 _build_lpc40xx_freertos\obj\main.o
                 0x100011f8                in_song
@@ -3348,7 +3348,7 @@ END GROUP
                 0x10000000                PROVIDE (_bdata_vma = ADDR (.data))
 OUTPUT(_build_lpc40xx_freertos\lpc40xx_freertos.elf elf32-littlearm)
 
-.debug_info     0x00000000    0x27983
+.debug_info     0x00000000    0x2799b
  .debug_info    0x00000000      0xae0 _build_lpc40xx_freertos\obj\entry_point.o
  .debug_info    0x00000ae0      0xd91 _build_lpc40xx_freertos\obj\interrupt_vector_table.o
  .debug_info    0x00001871      0x454 _build_lpc40xx_freertos\obj\clock.o
@@ -3388,11 +3388,11 @@ OUTPUT(_build_lpc40xx_freertos\lpc40xx_freertos.elf elf32-littlearm)
  .debug_info    0x00021de6      0x37d _build_lpc40xx_freertos\obj\ssp2_mutex.o
  .debug_info    0x00022163      0x337 _build_lpc40xx_freertos\obj\sys_time.o
  .debug_info    0x0002249a      0xd1d _build_lpc40xx_freertos\obj\uart_printf.o
- .debug_info    0x000231b7     0x13cd _build_lpc40xx_freertos\obj\lcd.o
- .debug_info    0x00024584     0x2b69 _build_lpc40xx_freertos\obj\main.o
- .debug_info    0x000270ed      0x896 _build_lpc40xx_freertos\obj\rtos_hooks.o
+ .debug_info    0x000231b7     0x13ed _build_lpc40xx_freertos\obj\lcd.o
+ .debug_info    0x000245a4     0x2b61 _build_lpc40xx_freertos\obj\main.o
+ .debug_info    0x00027105      0x896 _build_lpc40xx_freertos\obj\rtos_hooks.o
 
-.debug_abbrev   0x00000000     0x6e11
+.debug_abbrev   0x00000000     0x6e1c
  .debug_abbrev  0x00000000      0x247 _build_lpc40xx_freertos\obj\entry_point.o
  .debug_abbrev  0x00000247      0x32a _build_lpc40xx_freertos\obj\interrupt_vector_table.o
  .debug_abbrev  0x00000571      0x138 _build_lpc40xx_freertos\obj\clock.o
@@ -3433,8 +3433,8 @@ OUTPUT(_build_lpc40xx_freertos\lpc40xx_freertos.elf elf32-littlearm)
  .debug_abbrev  0x00005e02      0x194 _build_lpc40xx_freertos\obj\sys_time.o
  .debug_abbrev  0x00005f96      0x2cb _build_lpc40xx_freertos\obj\uart_printf.o
  .debug_abbrev  0x00006261      0x36a _build_lpc40xx_freertos\obj\lcd.o
- .debug_abbrev  0x000065cb      0x603 _build_lpc40xx_freertos\obj\main.o
- .debug_abbrev  0x00006bce      0x243 _build_lpc40xx_freertos\obj\rtos_hooks.o
+ .debug_abbrev  0x000065cb      0x60e _build_lpc40xx_freertos\obj\main.o
+ .debug_abbrev  0x00006bd9      0x243 _build_lpc40xx_freertos\obj\rtos_hooks.o
 
 .debug_aranges  0x00000000     0x1020
  .debug_aranges
@@ -3689,9 +3689,9 @@ OUTPUT(_build_lpc40xx_freertos\lpc40xx_freertos.elf elf32-littlearm)
                                 0x409 (size before relaxing)
  .debug_str     0x000065ee       0xaf _build_lpc40xx_freertos\obj\uart_printf.o
                                 0x6ea (size before relaxing)
- .debug_str     0x0000669d      0x118 _build_lpc40xx_freertos\obj\lcd.o
-                                0x795 (size before relaxing)
- .debug_str     0x000067b5      0x407 _build_lpc40xx_freertos\obj\main.o
+ .debug_str     0x0000669d      0x123 _build_lpc40xx_freertos\obj\lcd.o
+                                0x7a0 (size before relaxing)
+ .debug_str     0x000067c0      0x3fc _build_lpc40xx_freertos\obj\main.o
                                0x1096 (size before relaxing)
  .debug_str     0x00006bbc       0xd4 _build_lpc40xx_freertos\obj\rtos_hooks.o
                                 0x69f (size before relaxing)
@@ -4134,7 +4134,7 @@ OUTPUT(_build_lpc40xx_freertos\lpc40xx_freertos.elf elf32-littlearm)
  .debug_frame   0x00004750       0x20 c:/users/scott/onedrive/documents/sjsu/20a_sp/cmpe146/mp3/mp3-project/toolchains/windows/gcc-arm-none-eabi-8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libnosys.a(fstat.o)
  .debug_frame   0x00004770       0x20 c:/users/scott/onedrive/documents/sjsu/20a_sp/cmpe146/mp3/mp3-project/toolchains/windows/gcc-arm-none-eabi-8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libnosys.a(lseek.o)
 
-.debug_loc      0x00000000    0x12d9d
+.debug_loc      0x00000000    0x12d9c
  .debug_loc     0x00000000       0x4c _build_lpc40xx_freertos\obj\interrupt_vector_table.o
  .debug_loc     0x0000004c       0x23 _build_lpc40xx_freertos\obj\clock.o
  .debug_loc     0x0000006f       0x3f _build_lpc40xx_freertos\obj\crash.o
@@ -4169,9 +4169,9 @@ OUTPUT(_build_lpc40xx_freertos\lpc40xx_freertos.elf elf32-littlearm)
  .debug_loc     0x00011d7b       0x98 _build_lpc40xx_freertos\obj\peripherals_init.o
  .debug_loc     0x00011e13      0x160 _build_lpc40xx_freertos\obj\sys_time.o
  .debug_loc     0x00011f73      0x302 _build_lpc40xx_freertos\obj\uart_printf.o
- .debug_loc     0x00012275      0x491 _build_lpc40xx_freertos\obj\lcd.o
- .debug_loc     0x00012706      0x5df _build_lpc40xx_freertos\obj\main.o
- .debug_loc     0x00012ce5       0xb8 _build_lpc40xx_freertos\obj\rtos_hooks.o
+ .debug_loc     0x00012275      0x490 _build_lpc40xx_freertos\obj\lcd.o
+ .debug_loc     0x00012705      0x5df _build_lpc40xx_freertos\obj\main.o
+ .debug_loc     0x00012ce4       0xb8 _build_lpc40xx_freertos\obj\rtos_hooks.o
 
 .stab           0x00000000       0x54
  .stab          0x00000000       0x24 c:/users/scott/onedrive/documents/sjsu/20a_sp/cmpe146/mp3/mp3-project/toolchains/windows/gcc-arm-none-eabi-8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libnosys.a(close.o)

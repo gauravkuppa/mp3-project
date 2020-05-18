@@ -91,14 +91,14 @@ void lcd_up(song_memory_t *arr, int index) {
   lcd_write_string(arr[index + 1]);
 }
 
-void lcd_build_menu(song_memory_t *arr) {
+void lcd_build_menu(songname_t *arr) {
   for (int i = 0; i < 4; i++) {
     printf("in lcd_task, print options: %s\n", (&arr[i]));
   }
 
   int index = 0;
   printf("From LCD up: %s\n", arr);
-  printf("From LCD up: %s\n", &arr[1]);
+  printf("From LCD up: %s\n", (arr + 1));
   lcd_clear_display();
   lcd_set_cursor(0, 0);
   lcd_write_string(arr[index]);
