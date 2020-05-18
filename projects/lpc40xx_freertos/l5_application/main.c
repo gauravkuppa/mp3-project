@@ -33,8 +33,8 @@ typedef uint8_t mp3_data_blocks[512];
 
 QueueHandle_t Q_songname;
 QueueHandle_t Q_songdata;
-// SemaphoreHandle_t song_play;
-// SemaphoreHandle_t spi_sem;
+SemaphoreHandle_t song_play;
+SemaphoreHandle_t spi_sem;
 
 static QueueHandle_t sensor_data_queue;
 static EventGroupHandle_t xEventGroup;
@@ -73,76 +73,72 @@ bool i2c_slave_callback__write_memory(uint8_t memory_index,
   return status;
 }
 // Song list populate
-// typedef char song_memory_t[128];
-// static song_memory_t list_of_songs[32];
-// static size_t number_of_songs;
+typedef char song_memory_t[128];
+static song_memory_t list_of_songs[32];
+static size_t number_of_songs;
 
-// static void song_list__handle_filename(const char *filename) {
-//   // This will not work for cases like "file.mp3.zip"
-//   if (NULL != strstr(filename, ".mp3")) {
-//     // printf("Filename: %s\n", filename);
+static void song_list__handle_filename(const char *filename) {
+  // This will not work for cases like "file.mp3.zip"
+  if (NULL != strstr(filename, ".mp3")) {
+    // printf("Filename: %s\n", filename);
 
-//     // Dangerous function: If filename is > 128 chars, then it will copy
-//     extra
-//     // bytes leading to memory corruption
-//     strcpy(list_of_songs[number_of_songs],
-//     // filename);
+    // Dangerous function: If filenalist_of_songsme is > 128 chars, then it will
+    // copy extra bytes leading to memory corruption
+    // strcpy(list_of_songs[number_of_songs], filename);
 
-//     // Better: But strncpy() does not guarantee to copy null char if max
-//     length
-//     // encountered So we can manually subtract 1 to reserve as NULL char
-//     strncpy(list_of_songs[number_of_songs], filename,
-//             sizeof(song_memory_t) - 1);
+    // Better: But strncpy() does not guarantee to copy null char if max length
+    // encountered So we can manually subtract 1 to reserve as NULL char
+    strncpy(list_of_songs[number_of_songs], filename,
+            sizeof(song_memory_t) - 1);
 
-//     // Best: Compensates for the null, so if 128 char filename, then it
-//     copies
-//     // 127 chars, AND the NULL char snprintf(list_of_songs[number_of_songs],
-//     // sizeof(song_memory_t), "%.149s", filename);
+    // Best: Compensates for the null, so if 128 char filename, then it copies
+    // 127 chars, AND the NULL char snprintf(list_of_songs[number_of_songs],
+    // sizeof(song_memory_t), "%.149s", filename);
 
-//     ++number_of_songs;
-//     // or
-//     // number_of_songs++;
-//   }
-// }
+    ++number_of_songs;
+    // or
+    // number_of_songs++;
+  }
+}
 
-// void song_list__populate(void) {
-//   FRESULT res;
-//   static FILINFO file_info;
-//   const char *root_path = "/";
+void song_list__populate(void) {
+  FRESULT res;
+  static FILINFO file_info;
+  const char *root_path = "/";
 
-//   DIR dir;
-//   res = f_opendir(&dir, root_path);
+  DIR dir;
+  res = f_opendir(&dir, root_path);
 
-//   if (res == FR_OK) {
-//     for (;;) {
-//       res = f_readdir(&dir, &file_info); /* Read a directory item */
-//       if (res != FR_OK || file_info.fname[0] == 0) {
-//         break; /* Break on error or end of dir */
-//       }
+  if (res == FR_OK) {
+    for (;;) {
+      res = f_readdir(&dir, &file_info); /* Read a directory item */
+      if (res != FR_OK || file_info.fname[0] == 0) {
+        break; /* Break on error or end of dir */
+      }
 
-//       if (file_info.fattrib & AM_DIR) {
-//         /* Skip nested directories, only focus on MP3 songs at the root */
-//       } else { /* It is a file. */
-//         song_list__handle_filename(file_info.fname);
-//       }
-//     }
-//     f_closedir(&dir);
-//   }
-// }
+      if (file_info.fattrib & AM_DIR) {
+        /* Skip nested directories, only focus on MP3 songs at the root */
+      } else { /* It is a file. */
+        song_list__handle_filename(file_info.fname);
+      }
+    }
+    f_closedir(&dir);
+  }
+}
 
-// size_t song_list__get_item_count(void) { return number_of_songs; }
+size_t song_list__get_item_count(void) { return number_of_songs; }
 
-// const char *song_list__get_name_for_item(size_t item_number) {
-//   const char *return_pointer = "";
+const char *song_list__get_name_for_item(size_t item_number) {
+  const char *return_pointer = "";
 
-//   if (item_number >= number_of_songs) {
-//     return_pointer = "";
-//   } else {
-//     return_pointer = list_of_songs[item_number];
-//   }
+  if (item_number >= number_of_songs) {
+    return_pointer = "";
+  } else {
+    return_pointer = list_of_songs[item_number];
+  }
 
-//   return return_pointer;
-// }
+  return return_pointer;
+}
 void uart_read_task(void *p) {
   while (1) {
     // TODO: Use uart_lab__polled_get() function and printf the received value
@@ -246,203 +242,184 @@ void mp3_player_task(void *p) {
 
 // }
 
-//////////////// Need to define mins and maxes of volume, bass, and treble, add
-/// semaphores, change names to correct vars, and
+//////////////// Need to define mins and maxes of volume, bass, and treble,
 //////////////// link lcd and play functions
+#if 1
+songname_t selectedsong;
+int cursor = 0;
+bool playing = false;
+bool on_start = true;
+bool in_main = true;
+bool in_song = false;
+bool adjust_volume = false;
+bool adjust_treble = false;
+bool adjust_bass = false;
+const uint8_t volumeMAX = 0x00;
+const uint8_t volumeMIN = 0xFF;
+const uint8_t trebleMAX = 0xF0;
+const uint8_t trebleMIN = 0x00;
+const uint8_t bassMAX = 0xF0;
+const uint8_t bassMIN = 0x00;
+uint8_t volume = 0x20;
+uint16_t bassreg = 0x0000;
+uint8_t bass = 0x00;
+uint8_t treble = 0x00;
 
-// int cursor = 0;
-// bool on_start = true;
-// bool in_main = true;
-// bool in_song = false;
-// bool adjust_volume = false;
-// bool adjust_treble = false;
-// bool adjust_bass = false;
-// const uint8_t volumeMAX = 0x00;
-// const uint8_t volumeMIN = 0xFF;
-// uint8_t volume = 0x20;
-// char options[4] = {songs, volume, treble, bass};
-/* void buttonup(void) {
-  if(in_main){
-    if (adjust_volume || adjust_treble || adjust_bass){
-      if(adjust_volume){
-        if (volume == volumeMAX)
-          do nothing;
-        else{
-          volume--;
+static songname_t options[4] = {"songs", "volume", "treble", "bass"};
+
+void buttonup(void) {
+  if (in_main) {
+    if (adjust_volume || adjust_treble || adjust_bass) {
+      if (adjust_volume) {
+        if (volume == volumeMAX) {
+          ;
+        } else {
+          volume = volume - 0x10;
           mp3write(0x0B, volume, volume);
         }
       }
-      if(adjust_treble){
-        if (trebleMAX)
-          do nothing;
-        else {
-          treble++;
-          mp3write(treble);
+      if (adjust_treble) {
+        if (trebleMAX) {
+          ;
+        } else {
+          treble = treble + 0x10;
+          mp3write(0x02, treble, bass);
         }
       }
-      if(adjust_bass){
-        if (bassMAX)
-          do nothing;
-        else {
-          bass++;
-          mp3write(bass);
+      if (adjust_bass) {
+        if (bassMAX) {
+          ;
+        } else {
+          bass = bass + 0x10;
+          mp3write(0x02, treble, bass);
         }
       }
-    }
-    else{
-      if (cursor > 2){
-        cursor = 0;
-        adjust_lcd_screen();
-      }
-      else
-        cursor++;
-    }
-  }
-  else if(in_song){
-    (global list of songs[] = {"t-shirt", ... , "march_madness"})
-    (global array of options[] = {"songs, volume, treble, base"})
-    if (song == true) {
-      if (cursor = last_song_number){
-        cursor = 0;
-        adjust_lcd_screen();
-      }
-      else{
-        cursor++;
-        adjust_lcd_screen();
-      }
-    }
-  }
-} */
-/* void buttondown(void) {
-  if(in_main){
-    if (adjust_volume || adjust_treble || adjust_bass){
-      if(adjust_volume){
-        if (volume == volumeMIN)
-          do nothing;
-        else{
-          volume++;
-          mp3write(0x0B, volume, volume);
-        }
-      }
-      if(adjust_treble){
-        if (trebleMIN)
-          do nothing;
-        else {
-          treble--;
-          sci_write(treble);
-        }
-      }
-      if(adjust_bass){
-        if (bassMIN)
-          do nothing;
-        else {
-          bass--;
-          sci_write(bass);
-        }
-      }
-    }
-    else{
-      if (cursor < 1){
+    } else {
+      if (cursor == 0) {
         cursor = 3;
-        adjust_lcd_screen();
-      }
-      else{
+        // adjust_lcd_screen();
+      } else
         cursor--;
-        adjust_lcd_screen();
-      }
+    }
+  } else if (in_song) {
+
+    if (cursor == 0) {
+      cursor = 2;
+      // adjust_lcd_screen();
+    } else {
+      cursor--;
+      // adjust_lcd_screen();
     }
   }
-  else if(in_song){
-    scroll down
-    if (song == true) {
-      if (cursor < 1){
-        cursor = last_song_number;
-        adjust_lcd_screen();
-      }
-      else{
-        cursor--;
-        adjust_lcd_screen();
-      }
-    }
-  }
-} */
-/*
-/// pause_play only pauses or plays the current song, regardless of what menu
-you are on.
-/// select button lets you play a different song when you are on the song menu.
-void pause_play(void){
-  if (playing == true)
-    xSemaphoreTake(song_play);
-  else if(on_start == true)
-    play_song();
-  else
-    xSemaphoreGive(song_play);
-  on_start = false;
 }
-/*
-void select(void){
-  if (in_main){
-    if (cursor == 0){
+void buttondown(void) {
+  if (in_main) {
+    if (adjust_volume || adjust_treble || adjust_bass) {
+      if (adjust_volume) {
+        if (volume == volumeMIN) {
+          ;
+        } else {
+          volume = volume + 0x10;
+          mp3write(0x0B, volume, volume);
+        }
+      }
+      if (adjust_treble) {
+        if (trebleMIN) {
+          ;
+        } else {
+          treble = treble - 0x10;
+          mp3write(0x02, treble, bass);
+        }
+      }
+      if (adjust_bass) {
+        if (bassMIN) {
+          ;
+        } else {
+          bass = bass - 0x10;
+          mp3write(0x02, treble, bass);
+        }
+      }
+    } else {
+      if (cursor == 3) {
+        cursor = 0;
+        // adjust_lcd_screen();
+      } else {
+        cursor++;
+        // adjust_lcd_screen();
+      }
+    }
+  } else if (in_song) {
+    if (cursor == 3) {
+      cursor = 0;
+      // adjust_lcd_screen();
+    } else {
+      cursor++;
+      // adjust_lcd_screen();
+    }
+  }
+}
+
+/// pause_play only pauses or plays the current song, regardless of what menu
+/// you are on. select button lets you play a different song when you are on the
+/// song menu.
+// void pause_play(void) {
+//   if (playing == true)
+//     xSemaphoreTake(song_play);
+//   else if (on_start == true)
+//     // play_song();
+//     else xSemaphoreGive(song_play);
+//   on_start = false;
+// }
+
+void select(void) {
+  if (in_main) {
+    if (cursor == 0) {
       in_main = false;
       in_song = true;
       cursor = 0;
-      adjust_lcd_screen();
-    }
-    else if (cursor == 1){
-      in_main = false;
+      // adjust_lcd_screen();
+    } else if (cursor == 1) {
+      in_main = true;
       adjust_volume = true;
-      adjust_lcd_screen();
-    }
-    else if (cursor == 2){
-      in_main = false;
+      // adjust_lcd_screen();
+    } else if (cursor == 2) {
+      in_main = true;
       adjust_treble = true;
-      adjust_lcd_screen();
-    }
-    else if (cursor == 3){
-      in_main = false;
+      // adjust_lcd_screen();
+    } else if (cursor == 3) {
+      in_main = true;
       adjust_bass = true;
-      adjust_lcd_screen();
+      // adjust_lcd_screen();
     }
-  }
-  else if(in_song){
-    songname_t selectedsong = list_of_songs[cursor];
-    xQueueSend(Q_songname, selectedsong, portMAX_DELAY);
+  } else if (in_song) {
+    // selectedsong = &list_of_songs[cursor];
+    printf("selectedsong = %c\n", list_of_songs[1]);
+    xQueueSend(Q_songname, list_of_songs[1], portMAX_DELAY);
   }
 }
-*/
-/*
-void back(void){
-  if(in_main)
-    do nothing
-  else if (in_song){
+void back(void) {
+  if (in_main) {
+    ;
+  } else if (in_song) {
     in_song = false;
     in_main = true;
     cursor = 0;
-  }
-  else if(adjust_volume || adjust_treble || adjust_bass){
+  } else if (adjust_volume || adjust_treble || adjust_bass) {
     in_main = true;
     adjust_volume = false;
     adjust_treble = false;
     adjust_bass = false;
     cursor = 0;
-  }
-  else
-    do nothing;
+  } else
+    ;
 }
-*/
 
-// void testbuttons(){
-// buttondown();
-// select();
-// buttonup();
-// buttonup();
-// buttonup();
-// }
+#endif
 
 // Used to write sci commands
-
 void mp3write(uint8_t address, uint8_t highB, uint8_t lowB) {
   // xSemaphoreTake(spi_sem);
+  ssp0__set_max_clock(1000);
   while (!gpio__get(dreq)) {
     printf("waiting for dreq in sci\n");
   }
@@ -459,6 +436,7 @@ void mp3write(uint8_t address, uint8_t highB, uint8_t lowB) {
   }
 
   gpio__set(mp3cs); // set mp3cs high (deselect)
+  ssp0__set_max_clock(6000);
   // xSemaphoreGive(spi_sem);
 }
 
@@ -469,6 +447,7 @@ void reset() {
 }
 
 unsigned int mp3read(unsigned char addressbyte) {
+  ssp0__set_max_clock(1000);
   while (!gpio__get(dreq))
     ;
   gpio__reset(mp3cs); // Select control
@@ -484,7 +463,7 @@ unsigned int mp3read(unsigned char addressbyte) {
   while (!gpio__get(dreq))
     ;
   gpio__set(mp3cs);
-
+  ssp0__set_max_clock(6000);
   int resultvalue = response1 << 8;
   resultvalue |= response2;
   return resultvalue;
@@ -492,63 +471,59 @@ unsigned int mp3read(unsigned char addressbyte) {
 
 void lcd_task() {
 
-  // initialize_lcd_pins();
-  // initialize_lcd_screen();
-  // printf("finished init\n");
   lcd_init();
-  // init();
-  // start();
-  //
-  // print_string(s);
-  // backlight_color(255, 0, 0);
-  // backlight_off();
-  // backlight_on();
-  write_8_bit_mode((uint8_t)('H'), 1);
-  write_8_bit_mode((uint8_t)('e'), 1);
-  write_8_bit_mode((uint8_t)('l'), 1);
-  write_8_bit_mode((uint8_t)('l'), 1);
-  write_8_bit_mode((uint8_t)('o'), 1);
-  write_8_bit_mode((uint8_t)(','), 1);
-  int row = 1;
-  int col = 0;
-  uint8_t position = (col + (row * 40)) + 0x80;
-  write_8_bit_mode(position, 0);
-  write_8_bit_mode((uint8_t)('W'), 1);
-  write_8_bit_mode((uint8_t)('o'), 1);
-  write_8_bit_mode((uint8_t)('r'), 1);
-  write_8_bit_mode((uint8_t)('l'), 1);
-  write_8_bit_mode((uint8_t)('d'), 1);
-  write_8_bit_mode((uint8_t)('!'), 1);
-
-  fprintf(stderr, "the value being sent: %x", (uint8_t)('r'));
-  // write_8_bit_mode(0x72, 1);
-  // write_8_bit_mode(0x72, 1);
-  // write_8_bit_mode(0x72, 1);
-  // write_8_bit_mode(0x72, 1);
+  for (int i = 0; i < 4; i++) {
+    printf("in lcd_task, print options: %s\n", options[i]);
+  }
+  lcd_build_menu(&options);
+  int index = 0;
+  // lcd_set_cursor(0, 0);
+  // lcd_write_string(list_of_songs[index]);
+  // lcd_set_cursor(1, 0);
+  // lcd_write_string(list_of_songs[index + 1]);
+  vTaskDelay(3000);
+  // lcd_clear_display();
+  // index++;
+  // lcd_set_cursor(0, 0);
+  // lcd_write_string(list_of_songs[index]);
+  // lcd_set_cursor(1, 0);
+  // lcd_write_string(list_of_songs[index + 1]);
+  // lcd_up(&list_of_songs, index);
+  // xSemaphoreTake(spi_sem, NULL);
+  // xSemaphoreGive(spi_sem);
   while (1) {
 
-    // lcd__set_cursor_position(0, 0);
-    // printf("set cursor\n");
-    // lcd__cursor_move_right();
-    // char *s = "hello";
-    // print_msg(s);
-
-    // lcd__write_value(0x02);
-    printf("heading to while loop\n");
+    vTaskDelay(10);
   }
 }
-
+void testbuttons() {
+  buttondown();
+  buttondown();
+  select();
+  buttonup();
+  uint16_t temp;
+  temp = mp3read(0x02);
+  printf("%x\n", temp);
+  back();
+  buttondown();
+  buttondown();
+  buttondown();
+  select();
+  buttonup();
+  temp = mp3read(0x02);
+  printf("%x\n", temp);
+}
 int main(void) {
   printf("in main\n");
-  // printf("populating songs...\n");
-  // song_list__populate();
-  // for (size_t song_number = 0; song_number < song_list__get_item_count();
-  // song_number++) {
-  //  printf("Song %2d: %s\n", (1 + song_number),
-  //  song_list__get_name_for_item(song_number));
-  //}
+  printf("populating songs...\n");
+  song_list__populate();
+  for (size_t song_number = 0; song_number < song_list__get_item_count();
+       song_number++) {
+    printf("Song %2d: %s\n", (1 + song_number),
+           song_list__get_name_for_item(song_number));
+  }
   // vTaskDelay(1000);
-  /**ssp2__initialize(24000);
+  ssp2__initialize(24000);
   xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1, NULL);
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
@@ -562,7 +537,7 @@ int main(void) {
       GPIO__PORT_0, 18, GPIO__FUNCTION_2); // SSP0 is function 010, MOSI
 
   // GPIO output, reset
-  rst = gpio__construct_with_function(GPIO__PORT_2, 4, 0);
+  rst = gpio__construct_with_function(GPIO__PORT_2, 2, 0);
   gpio__set_as_output(rst);
 
   // GPIO output, mp3cs
@@ -600,9 +575,7 @@ int main(void) {
   mp3write(0x00, 0x88, 0x00); // output mode
   // mp3write(0x03, 0x60, 0x00); // output mode
   // mp3write(0x0B, 0x10, 0x10); // set volume
-  // mp3write(0x02, 0x7A, 0x00); // set bass
-  // decoder_init(0x2, 0x7A00); // bass
-  // decoder_init(0x3, 0x6000); // clk
+  mp3write(0x02, 0x30, 0x30); // set bass
 
   gpio__set(sdcs);  // set sdcs high
   gpio__set(xdcs);  // set xdcs high
@@ -634,16 +607,13 @@ int main(void) {
   fprintf(stderr, "mode: %x \n", MP3Mode);
   fprintf(stderr, "status: %x \n", MP3Status);
   fprintf(stderr, "clock: %x \n", MP3Clock);
-  fprintf(stderr, "version: %x \n", version);**/
+  fprintf(stderr, "version: %x \n", version);
   xTaskCreate(lcd_task, "lcd", (4096 / sizeof(void *)), NULL, 1, NULL);
-  xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1, NULL);
-  // uint8_t value = 0x28;
-  // i2c__write_slave_data(I2C__2, 0xC4, 0x80, &value, 2);
-  // init();
-  // start();
-  // backlight_on();
-  // backlight_off();
-
+  // xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1, NULL);
+  mp3write(0x0B, 0x20, 0x20);
+  int tempvol = mp3read(0x0B);
+  fprintf(stderr, "%x\n", tempvol);
+  testbuttons();
   fprintf(stderr, "starting scheduler\n");
 
   vTaskStartScheduler();
