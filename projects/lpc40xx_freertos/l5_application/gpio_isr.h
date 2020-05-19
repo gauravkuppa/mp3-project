@@ -1,6 +1,9 @@
 // @file gpio_isr.h
+
 #pragma once
+
 #include <stdint.h>
+
 typedef enum {
   GPIO_INTR__FALLING_EDGE,
   GPIO_INTR__RISING_EDGE,
@@ -17,3 +20,6 @@ void gpio0__attach_interrupt(uint32_t pin, gpio_interrupt_e interrupt_type,
 // will invoke user attached callbacks You can hijack 'interrupt_vector_table.c'
 // or use API at lpc_peripherals.h
 void gpio0__interrupt_dispatcher(void);
+
+int get_pin(void);
+void clear_pin_interrupt(int pin_to_clear);

@@ -33,8 +33,13 @@ typedef uint8_t mp3_data_blocks[512];
 
 QueueHandle_t Q_songname;
 QueueHandle_t Q_songdata;
-SemaphoreHandle_t song_play;
+SemaphoreHandle_t song_play_sem;
 SemaphoreHandle_t spi_sem;
+SemaphoreHandle_t lcd_sem_up;
+SemaphoreHandle_t lcd_sem_down;
+SemaphoreHandle_t lcd_sem_play;
+SemaphoreHandle_t lcd_sem_back;
+SemaphoreHandle_t lcd_sem_select;
 
 static QueueHandle_t sensor_data_queue;
 static EventGroupHandle_t xEventGroup;
@@ -42,7 +47,53 @@ static EventBits_t uxBits;
 
 static volatile uint8_t slave_memory[256];
 
-gpio_s sck, miso, mosi, dreq, mp3cs, sdcs, xdcs, rst;
+gpio_s sck, miso, mosi, dreq, mp3cs, sdcs, xdcs, rst, gpio30, gpio29, gpio01,
+    gpio07, gpio09, gpio10, gpio25;
+
+// typedef struct {
+//   uint8_t ports;
+//   uint8_t pins;
+// } port_pin_s;
+
+// void pin29_isr(void) {
+//   // uart_printf__polled(UART__0, "P0.29");
+//   // delay__ms(100);
+//   lcd_move_menu(&list_of_songs, 3, index--, 0);
+// }
+// void pin30_isr(void) {
+//   // uart_printf__polled(UART__0, "P0.30");
+//   // delay__ms(100);
+//   lcd_move_menu(&list_of_songs, 3, index++, 0);
+// }
+
+// void task2main(void) {
+//   //    port_pin_s gpio30 = {0,
+//   //                               30}; // struct used to set input from
+//   //                               gpio_lab.c
+//   //   static port_pin_s gpio29 = {0, 29};
+//   // struct used to set as input from gpio_lab.c
+
+//   // void gpio__set_as_input(gpio_s gpio);
+//   gpio30 = gpio__construct_with_function(GPIO__PORT_0, 30, 0);
+//   gpio__set_as_input(gpio30); // set pin30 to input
+//   // // gpio__set_as_output(LED2);     // sets led2 to output
+//   gpio29 = gpio__construct_with_function(GPIO__PORT_0, 29, 0);
+//   gpio__set_as_input(gpio29); // set pin29 to input
+
+//   // gpio__set_as_output(LED3);     // set led3 to output
+//   LPC_IOCON->P0_30 &= ~(3 << 3); // reset resistor for p30
+//   LPC_IOCON->P0_30 |= (1 << 3);  // set resistor for p30
+//   LPC_IOCON->P0_29 &= ~(3 << 3); // reset resistor for p29
+//   LPC_IOCON->P0_29 |= (1 << 3);  // set p29
+//   gpio0__attach_interrupt(30, GPIO_INTR__RISING_EDGE, pin30_isr);
+//   gpio0__attach_interrupt(29, GPIO_INTR__FALLING_EDGE, pin29_isr);
+//   lpc_peripheral__enable_interrupt(LPC_PERIPHERAL__GPIO,
+//                                    gpio0__interrupt_dispatcher);
+//   // while (1) {
+//   //   uart_printf__polled(UART__0, "In Main: Idle Looping\n");
+//   //   delay__ms(1000);
+//   // }
+// }
 
 bool i2c_slave_callback__read_memory(uint8_t memory_index, uint8_t *memory) {
   // TODO: Read the data from slave_memory[memory_index] to *memory pointer
@@ -181,7 +232,7 @@ void mp3_reader_task(void *p) {
           // printf("About to read\n");
 
           memset(bytes_512, 0, sizeof(bytes_512));
-          // xSemaphoreTake(song_play);
+          xSemaphoreTake(song_play_sem, 1000);
           if (FR_OK == f_read(&file, mp3_data_block, sizeof(mp3_data_block),
                               &bytes_written)) {
             // printf("read file %x\n", &mp3_data_block[0]);
@@ -190,7 +241,7 @@ void mp3_reader_task(void *p) {
             xQueueSend(Q_songdata, mp3_data_block, portMAX_DELAY);
             // printf("%x", mp3_data_block);mp3_data_block // testing print
             // vTaskDelay(300);
-            // xSemaphoreGive(song_play);
+            xSemaphoreGive(song_play_sem);
             if (xQueueReceive(Q_songname, &name[0], 0)) {
               break;
             }
@@ -245,7 +296,7 @@ void mp3_player_task(void *p) {
 //////////////// Need to define mins and maxes of volume, bass, and treble,
 //////////////// link lcd and play functions
 #if 1
-songname_t selectedsong;
+int selectedsong = -1;
 int cursor = 0;
 bool playing = false;
 bool on_start = true;
@@ -256,16 +307,17 @@ bool adjust_treble = false;
 bool adjust_bass = false;
 const uint8_t volumeMAX = 0x00;
 const uint8_t volumeMIN = 0xFF;
-const uint8_t trebleMAX = 0xF0;
-const uint8_t trebleMIN = 0x00;
-const uint8_t bassMAX = 0xF0;
-const uint8_t bassMIN = 0x00;
+const int8_t trebleMAX = 0b10000110;
+const int8_t trebleMIN = 0b10010110;
+const uint8_t bassMAX = 0xF6;
+const uint8_t bassMIN = 0x06;
 uint8_t volume = 0x20;
 uint16_t bassreg = 0x0000;
-uint8_t bass = 0x00;
-uint8_t treble = 0x00;
+uint8_t bass = 0x06;
+int8_t treble = 0x00000110;
+int isStart = 0;
 
-static songname_t options[4] = {"songs", "volume", "treble", "bass"};
+static song_memory_t options[4] = {"songs", "volume", "treble", "bass"};
 
 void buttonup(void) {
   if (in_main) {
@@ -279,35 +331,40 @@ void buttonup(void) {
         }
       }
       if (adjust_treble) {
-        if (trebleMAX) {
+        if (treble == trebleMAX) {
           ;
         } else {
-          treble = treble + 0x10;
+          treble = treble + 0b10000;
+          // fprintf(stderr, "treble write: %x\n", treble);
           mp3write(0x02, treble, bass);
         }
       }
       if (adjust_bass) {
-        if (bassMAX) {
+        if (bass == bassMAX) {
           ;
         } else {
           bass = bass + 0x10;
+          // fprintf(stderr, "bass write: %x\n", bass);
           mp3write(0x02, treble, bass);
         }
       }
     } else {
-      if (cursor == 0) {
-        cursor = 3;
+      if (cursor == 3) {
+        ;
         // adjust_lcd_screen();
-      } else
-        cursor--;
+      } else {
+        fprintf(stderr, "lcd_move_up options\n");
+        lcd_move_menu(&options, 4, ++cursor, -1);
+      }
     }
   } else if (in_song) {
 
-    if (cursor == 0) {
-      cursor = 2;
+    if (cursor == 3) {
+      ;
       // adjust_lcd_screen();
     } else {
-      cursor--;
+      fprintf(stderr, "lcd_move_up songlist\n");
+      lcd_move_menu(&list_of_songs, 3, ++cursor, selectedsong);
       // adjust_lcd_screen();
     }
   }
@@ -324,52 +381,71 @@ void buttondown(void) {
         }
       }
       if (adjust_treble) {
-        if (trebleMIN) {
+        if (treble == trebleMIN) {
           ;
         } else {
-          treble = treble - 0x10;
+          treble = treble - 0b10000;
+
+          fprintf(stderr, "treble write: %x\n", treble);
           mp3write(0x02, treble, bass);
         }
       }
       if (adjust_bass) {
-        if (bassMIN) {
+        if (bass == bassMIN) {
           ;
         } else {
           bass = bass - 0x10;
+          fprintf(stderr, "bass write: %x\n", bass);
           mp3write(0x02, treble, bass);
         }
       }
     } else {
-      if (cursor == 3) {
-        cursor = 0;
-        // adjust_lcd_screen();
+      if (cursor == 0) {
+        ;
       } else {
-        cursor++;
+        fprintf(stderr, "lcd_move_down options\n");
+        lcd_move_menu(&options, 4, --cursor, -1);
         // adjust_lcd_screen();
       }
     }
   } else if (in_song) {
-    if (cursor == 3) {
-      cursor = 0;
+    if (cursor == 0) {
+      ;
       // adjust_lcd_screen();
     } else {
-      cursor++;
       // adjust_lcd_screen();
+      fprintf(stderr, "lcd_move_down songlist\n");
+      lcd_move_menu(&list_of_songs, 3, --cursor,
+                    selectedsong); // lcd scroll down
+      fprintf(stderr, "%s\n", options[cursor]);
+      // fprintf(stderr, "%s\n", options[cursor]);//
     }
+    //
+    fprintf(stderr, "%s\n", options[cursor]);
+    // fprintf(stderr, "%s\n", options[cursor]);  }
   }
 }
 
 /// pause_play only pauses or plays the current song, regardless of what menu
-/// you are on. select button lets you play a different song when you are on the
-/// song menu.
-// void pause_play(void) {
-//   if (playing == true)
-//     xSemaphoreTake(song_play);
-//   else if (on_start == true)
-//     // play_song();
-//     else xSemaphoreGive(song_play);
-//   on_start = false;
-// }
+/// you are on. select button lets you play a different song when you are on
+/// the song menu.
+
+void pause_play(void) {
+  if (playing == true) {
+    xSemaphoreTake(song_play_sem, portMAX_DELAY);
+    playing = false;
+  } else if (on_start == true) {
+    xSemaphoreTake(song_play_sem, portMAX_DELAY);
+    xQueueSend(Q_songname, list_of_songs[0], portMAX_DELAY);
+    playing = true;
+    selectedsong = 0;
+    xSemaphoreGive(song_play_sem);
+  } else {
+    xSemaphoreGive(song_play_sem);
+    playing = true;
+  }
+  on_start = false;
+}
 
 void select(void) {
   if (in_main) {
@@ -377,6 +453,7 @@ void select(void) {
       in_main = false;
       in_song = true;
       cursor = 0;
+      lcd_build_menu(&list_of_songs);
       // adjust_lcd_screen();
     } else if (cursor == 1) {
       in_main = true;
@@ -392,26 +469,32 @@ void select(void) {
       // adjust_lcd_screen();
     }
   } else if (in_song) {
-    // selectedsong = &list_of_songs[cursor];
-    printf("selectedsong = %c\n", list_of_songs[1]);
-    xQueueSend(Q_songname, list_of_songs[1], portMAX_DELAY);
+    selectedsong = cursor;
+    fprintf(stderr, "selectedsong = %c\n", list_of_songs[cursor]);
+    xQueueSend(Q_songname, list_of_songs[cursor], portMAX_DELAY);
+    playing = true;
+    on_start = false;
   }
 }
 void back(void) {
   if (in_main) {
-    ;
+    if (adjust_volume) {
+      adjust_volume = false;
+      cursor = 1;
+    } else if (adjust_treble) {
+      adjust_treble = false;
+      cursor = 2;
+    } else if (adjust_bass) {
+      adjust_bass = false;
+      cursor = 3;
+    } else
+      ;
   } else if (in_song) {
+    in_main = true;
     in_song = false;
-    in_main = true;
+    lcd_build_menu(&options);
     cursor = 0;
-  } else if (adjust_volume || adjust_treble || adjust_bass) {
-    in_main = true;
-    adjust_volume = false;
-    adjust_treble = false;
-    adjust_bass = false;
-    cursor = 0;
-  } else
-    ;
+  }
 }
 
 #endif
@@ -447,6 +530,7 @@ void reset() {
 }
 
 unsigned int mp3read(unsigned char addressbyte) {
+  // xSemaphoreTake(spi_sem);
   ssp0__set_max_clock(1000);
   while (!gpio__get(dreq))
     ;
@@ -464,56 +548,169 @@ unsigned int mp3read(unsigned char addressbyte) {
     ;
   gpio__set(mp3cs);
   ssp0__set_max_clock(6000);
+  // xSemaphoreGive(spi_sem);
   int resultvalue = response1 << 8;
   resultvalue |= response2;
   return resultvalue;
 }
 
-void lcd_task() {
+void testbuttons() {
+  buttondown(); // volume
+  buttondown(); // treble
+  select();     // adjust treble
+  buttondown(); // decrease treble
+  uint16_t temp = 0x0000;
+  temp = mp3read(0x02); // read treble
+  fprintf(stderr, "read treble: %x\n", temp);
+  back();               // main
+  buttondown();         // bass
+  select();             // adjust bass
+  buttonup();           // increase bass
+  temp = mp3read(0x02); // read bass
+  fprintf(stderr, "read bass: %x\n", temp);
+}
 
+void button_interrupt_task() {
   lcd_init();
-  for (int i = 0; i < 4; i++) {
-    printf("in lcd_task, print options: %s\n", options[i]);
+
+  if (!isStart) {
+    lcd_build_menu(&options);
+    isStart = 1;
   }
-  lcd_build_menu(&options);
-  int index = 0;
-  // lcd_set_cursor(0, 0);
-  // lcd_write_string(list_of_songs[index]);
-  // lcd_set_cursor(1, 0);
-  // lcd_write_string(list_of_songs[index + 1]);
-  vTaskDelay(3000);
-  // lcd_clear_display();
-  // index++;
-  // lcd_set_cursor(0, 0);
-  // lcd_write_string(list_of_songs[index]);
-  // lcd_set_cursor(1, 0);
-  // lcd_write_string(list_of_songs[index + 1]);
-  // lcd_up(&list_of_songs, index);
-  // xSemaphoreTake(spi_sem, NULL);
-  // xSemaphoreGive(spi_sem);
   while (1) {
 
-    vTaskDelay(10);
+    if (xSemaphoreTake(lcd_sem_down, 1000)) {
+      fprintf(stderr, "in up\n");
+      buttondown();
+    } else if (xSemaphoreTake(lcd_sem_up, 1000)) {
+      fprintf(stderr, "in down\n");
+      buttonup();
+    } else if (xSemaphoreTake(lcd_sem_play, 1000)) {
+      fprintf(stderr, "in play/pause\n");
+      pause_play();
+    } else if (xSemaphoreTake(lcd_sem_select, 1000)) {
+      fprintf(stderr, "in select\n");
+      select();
+    } else if (xSemaphoreTake(lcd_sem_back, 1000)) {
+      fprintf(stderr, "in main\n");
+      back();
+    } else
+      fprintf(stderr, "aint doin shit\n");
   }
 }
-void testbuttons() {
-  buttondown();
-  buttondown();
-  select();
-  buttonup();
-  uint16_t temp;
-  temp = mp3read(0x02);
-  printf("%x\n", temp);
-  back();
-  buttondown();
-  buttondown();
-  buttondown();
-  select();
-  buttonup();
-  temp = mp3read(0x02);
-  printf("%x\n", temp);
+
+// void pin29_isr(void) {
+//   // uart_printf__polled(UART__0, "P0.29");
+//   // delay__ms(100);
+//   // lcd_move_menu(&list_of_songs, 3, 0, 0); // up
+//   uart_printf__polled(UART__0, "in handler 29\n");
+//   xSemaphoreGiveFromISR(lcd_sem_up, NULL);
+// }
+// void pin30_isr(void) {
+//   // uart_printf__polled(UART__0, "P0.30");
+//   // delay__ms(100);
+//   uart_printf__polled(UART__0, "in handler 30\n");
+//   xSemaphoreGiveFromISR(lcd_sem_down, NULL);
+
+//   // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
+// }
+
+void pin01_isr(void) { // lcd_sem_down
+  // uart_printf__polled(UART__0, "P0.30");
+  // delay__ms(100);
+  uart_printf__polled(UART__0, "in handler 01\n");
+  xSemaphoreGiveFromISR(lcd_sem_down, NULL);
+
+  // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
 }
+void pin07_isr(void) { // lcd_sem_up
+  // uart_printf__polled(UART__0, "P0.30");
+  // delay__ms(100);
+  uart_printf__polled(UART__0, "in handler 01\n");
+  xSemaphoreGiveFromISR(lcd_sem_up, NULL);
+
+  // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
+}
+void pin09_isr(void) { // play
+  // uart_printf__polled(UART__0, "P0.30");
+  // delay__ms(100);
+  uart_printf__polled(UART__0, "in handler 01\n");
+  xSemaphoreGiveFromISR(lcd_sem_play, NULL);
+
+  // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
+}
+void pin10_isr(void) { // back
+  // uart_printf__polled(UART__0, "P0.30");
+  // delay__ms(100);
+  uart_printf__polled(UART__0, "in handler 01\n");
+  xSemaphoreGiveFromISR(lcd_sem_back, NULL);
+
+  // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
+}
+void pin25_isr(void) { // select
+  // uart_printf__polled(UART__0, "P0.30");
+  // delay__ms(100);
+  uart_printf__polled(UART__0, "in handler 01\n");
+  xSemaphoreGiveFromISR(lcd_sem_select, NULL);
+
+  // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
+}
+
+void task2main(void) {
+  //    port_pin_s gpio30 = {0,
+  //                               30}; // struct used to set input from
+  //                               gpio_lab.c
+  //   static port_pin_s gpio29 = {0, 29};
+  // struct used to set as input from gpio_lab.c
+
+  // void gpio__set_as_input(gpio_s gpio);
+  // gpio30 = gpio__construct_with_function(GPIO__PORT_0, 30, 0);
+  // gpio__set_as_input(gpio30); // set pin30 to input
+  // // // gpio__set_as_output(LED2);     // sets led2 to output
+  // gpio29 = gpio__construct_with_function(GPIO__PORT_0, 29, 0);
+  // gpio__set_as_input(gpio29); // set pin29 to input
+
+  // // gpio__set_as_output(LED3);     // set led3 to output
+  // LPC_IOCON->P0_30 &= ~(3 << 3); // reset resistor for p30
+  // LPC_IOCON->P0_30 |= (1 << 3);  // set resistor for p30
+  // LPC_IOCON->P0_29 &= ~(3 << 3); // reset resistor for p29
+  // LPC_IOCON->P0_29 |= (1 << 3);  // set p29
+  gpio01 = gpio__construct_with_function(GPIO__PORT_0, 1, 0);
+  gpio07 = gpio__construct_with_function(GPIO__PORT_0, 7, 0);
+  gpio09 = gpio__construct_with_function(GPIO__PORT_0, 9, 0);
+  gpio10 = gpio__construct_with_function(GPIO__PORT_0, 10, 0);
+  gpio25 = gpio__construct_with_function(GPIO__PORT_0, 25, 0);
+  gpio__set_as_input(gpio01);
+  gpio__set_as_input(gpio07);
+  gpio__set_as_input(gpio09);
+  gpio__set_as_input(gpio10);
+  gpio__set_as_input(gpio25);
+
+  gpio0__attach_interrupt(1, GPIO_INTR__RISING_EDGE, pin01_isr);
+  gpio0__attach_interrupt(7, GPIO_INTR__RISING_EDGE, pin07_isr);
+  gpio0__attach_interrupt(9, GPIO_INTR__RISING_EDGE, pin09_isr);
+  gpio0__attach_interrupt(10, GPIO_INTR__RISING_EDGE, pin10_isr);
+  gpio0__attach_interrupt(25, GPIO_INTR__RISING_EDGE, pin25_isr);
+  // gpio0__attach_interrupt(30, GPIO_INTR__RISING_EDGE, pin30_isr);
+  // gpio0__attach_interrupt(29, GPIO_INTR__FALLING_EDGE, pin29_isr);
+
+  lpc_peripheral__enable_interrupt(LPC_PERIPHERAL__GPIO,
+                                   gpio0__interrupt_dispatcher);
+  // while (1) {
+  //   uart_printf__polled(UART__0, "In Main: Idle Looping\n");
+  //   delay__ms(1000);
+  // }
+}
+
 int main(void) {
+  lcd_sem_up = xSemaphoreCreateBinary();
+  lcd_sem_down = xSemaphoreCreateBinary();
+  lcd_sem_play = xSemaphoreCreateBinary();
+  lcd_sem_select = xSemaphoreCreateBinary();
+  lcd_sem_back = xSemaphoreCreateBinary();
+  song_play_sem = xSemaphoreCreateMutex();
+  spi_sem = xSemaphoreCreateMutex();
+
   printf("in main\n");
   printf("populating songs...\n");
   song_list__populate();
@@ -575,7 +772,7 @@ int main(void) {
   mp3write(0x00, 0x88, 0x00); // output mode
   // mp3write(0x03, 0x60, 0x00); // output mode
   // mp3write(0x0B, 0x10, 0x10); // set volume
-  mp3write(0x02, 0x30, 0x30); // set bass
+  mp3write(0x02, 0x06, 0x06); // set bass
 
   gpio__set(sdcs);  // set sdcs high
   gpio__set(xdcs);  // set xdcs high
@@ -597,6 +794,9 @@ int main(void) {
   MP3Clock = mp3read(0x03);
   ssp0__set_max_clock(6000); // increase spi clock
 
+  // isr test
+  task2main();
+
   // reset();
   delay__ms(10);
   xTaskCreate(mp3_reader_task, "reader", (4096 / sizeof(void *)), NULL, 1,
@@ -607,13 +807,18 @@ int main(void) {
   fprintf(stderr, "mode: %x \n", MP3Mode);
   fprintf(stderr, "status: %x \n", MP3Status);
   fprintf(stderr, "clock: %x \n", MP3Clock);
-  fprintf(stderr, "version: %x \n", version);
-  xTaskCreate(lcd_task, "lcd", (4096 / sizeof(void *)), NULL, 1, NULL);
-  // xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1, NULL);
+  // fprintf(stderr, "version: %x \n", version);
+  fprintf(stderr, "lcd_init\n");
+
+  xTaskCreate(button_interrupt_task, "button_interrupt",
+              (4096 / sizeof(void *)), NULL, 3, NULL);
+  // xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1,
+  // NULL);
+  fprintf(stderr, "about  write to volume\n");
   mp3write(0x0B, 0x20, 0x20);
   int tempvol = mp3read(0x0B);
   fprintf(stderr, "%x\n", tempvol);
-  testbuttons();
+  // testbuttons();
   fprintf(stderr, "starting scheduler\n");
 
   vTaskStartScheduler();
