@@ -44,8 +44,8 @@ SemaphoreHandle_t lcd_sem_select;
 static QueueHandle_t sensor_data_queue;
 static EventGroupHandle_t xEventGroup;
 static EventBits_t uxBits;
-
 static volatile uint8_t slave_memory[256];
+clock_t start, end, dif;
 
 gpio_s sck, miso, mosi, dreq, mp3cs, sdcs, xdcs, rst, gpio30, gpio29, gpio01,
     gpio07, gpio09, gpio10, gpio25;
@@ -473,19 +473,16 @@ void select(void) {
       // adjust_lcd_screen();
     }
   } else if (in_song) {
+    if (paused) {
+      xSemaphoreGive(play_sem);
+    }
     selectedsong = cursor;
     fprintf(stderr, "selected_song index: %d", selectedsong);
     lcd_move_menu(&list_of_songs, 8, cursor, selectedsong);
     // fprintf(stderr, "selectedsong = %c\n", list_of_songs[cursor]);
     // lcd_set_cursor(cursor % 2, strlen(list_of_songs[cursor]) + 1);
     // lcd_write_string(" <");
-
-    if (paused) {
-      paused = false;
-      xSemaphoreGive(play_sem);
-    }
     xQueueSend(Q_songname, list_of_songs[cursor], portMAX_DELAY);
-
     playing = true;
     on_start = false;
   }
@@ -664,6 +661,13 @@ void pin01_isr(void) { // lcd_sem_down
 void pin07_isr(void) { // lcd_sem_up
   // uart_printf__polled(UART__0, "P0.30");
   // delay__ms(100);
+  start = clock();
+  while (!gpio__get(gpio07)) {
+    ;
+  }
+  end = clock();
+  dif = end - start;
+  printf("%d elapsed\n");
   uart_printf__polled(UART__0, "in handler 01\n");
   xSemaphoreGiveFromISR(lcd_sem_up, NULL);
 
