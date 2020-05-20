@@ -57,25 +57,43 @@ void lcd_set_cursor(int row, int col) {
   write_8_bit_mode(position, 0);
 }
 
-void lcd_up(song_memory_t *arr, int index) {
+void lcd_build_menu(song_memory_t *arr) {
+
+  int index = 0;
+  // printf("From LCD up: %s\n", arr);
+  // printf("From LCD up: %s\n", (arr + 1));
+  lcd_clear_display();
+  lcd_set_cursor(0, 0);
+  lcd_write_string(arr[index]);
+  lcd_set_cursor(1, 0);
+  lcd_write_string(arr[index + 1]);
+}
+
+void lcd_move_menu(song_memory_t *arr, int length, int current_cursor_index,
+                   int current_song_index) {
   /*
-     _____________________________________________
+    input current_cursor_index++ to move up
+    input current_cursor_index-- to move down
+
+    Move down
+    _____________________________________________
     |                                            |
     |         song_i.mp3                         |
     |                                            |
-    |         song_i+1.mp                        |
+    |         song_i+1.mp3                       |
     |                                            |
     |____________________________________________|
 
     to
      _____________________________________________
     |                                            |
-    |         song_i+1.mp3                       |
+    |         song_i-1.mp3                       |
     |                                            |
-    |         song_i+2.mp                        |
+    |         song_i.mp3                         |
     |                                            |
     |____________________________________________|
 
+<<<<<<< HEAD
 
   */
 
@@ -186,26 +204,29 @@ void lcd_build_menu(song_memory_t *arr) {
 }
 void lcd_down(song_memory_t *arr, int index) {
   /*
+=======
+    Move up
+>>>>>>> 0392ac80ed849c0ab0b4f18e397b9c81b0d9ca07
      _____________________________________________
     |                                            |
     |         song_i.mp3                         |
     |                                            |
-    |         song_i+1.mp3                        |
+    |         song_i+1.mp                        |
     |                                            |
     |____________________________________________|
 
     to
      _____________________________________________
     |                                            |
-    |         song_i-1.mp3                       |
+    |         song_i+1.mp3                       |
     |                                            |
-    |         song_i.mp3                         |
+    |         song_i+2.mp                        |
     |                                            |
     |____________________________________________|
 
 
-  */
 
+<<<<<<< HEAD
   // check edge conditions !!!!!!
   index--;
   if(!(index - 1 > 0)) { // if 
@@ -224,6 +245,32 @@ void lcd_down(song_memory_t *arr, int index) {
   lcd_write_string(first);
   lcd_set_cursor(1, 0);
   lcd_write_string(second);
+=======
+  */
+
+  // current_cursor_index--;
+  if (current_cursor_index < 0) {
+    return;
+  } else if (current_cursor_index > length) {
+    return;
+  }
+  // printf("From LCD up: %s\n", arr[0]);
+  // printf("From LCD up: %s\n", arr[1]);
+
+  lcd_clear_display();
+  lcd_set_cursor(0, 0);
+  lcd_write_string(arr[current_cursor_index]);
+  lcd_write_string(" *");
+  if (current_cursor_index == current_song_index) {
+    lcd_write_string(" <");
+  }
+  // lcd_write_char('*');
+  lcd_set_cursor(1, 0);
+  lcd_write_string(arr[current_cursor_index + 1]);
+  if (current_cursor_index + 1 == current_song_index) {
+    lcd_write_string(" <");
+  }
+>>>>>>> 0392ac80ed849c0ab0b4f18e397b9c81b0d9ca07
 }
 
 void write_8_bit_mode(uint8_t command, uint8_t rs_value) {
