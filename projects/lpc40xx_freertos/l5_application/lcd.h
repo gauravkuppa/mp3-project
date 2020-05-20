@@ -12,12 +12,7 @@ void lcd_write_string(char *s);
 void lcd_clear_display();
 void lcd_set_cursor(int row, int col);
 void lcd_build_menu(song_memory_t *arr);
-<<<<<<< HEAD
-void lcd_up(song_memory_t *arr, int index);
-void lcd_down(song_memory_t *arr, int index);
-=======
 void lcd_move_menu(song_memory_t *arr, int length, int current_cursor_index,
                    int current_song_index);
->>>>>>> 0392ac80ed849c0ab0b4f18e397b9c81b0d9ca07
 void write_8_bit_mode(uint8_t command, uint8_t rs_value);
 void pulse_clock(uint8_t delay);
