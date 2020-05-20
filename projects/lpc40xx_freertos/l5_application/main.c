@@ -314,6 +314,7 @@ uint16_t bassreg = 0x0000;
 uint8_t bass = 0x06;
 int8_t treble = 0x00000110;
 int isStart = 0;
+bool paused = false;
 
 static song_memory_t options[4] = {"songs", "volume", "treble", "bass"};
 
@@ -434,14 +435,17 @@ void buttondown(void) {
 
 void pause_play(void) {
   if (playing == true) {
-    // xSemaphoreGive(play_sem);
+    fprintf(stderr, "about to send play_sem\n");
+    xSemaphoreGive(play_sem);
+
     playing = false;
   } else if (on_start == true) {
     xQueueSend(Q_songname, list_of_songs[0], portMAX_DELAY);
     playing = true;
     selectedsong = 0;
   } else {
-    // xSemaphoreGive(play_sem);
+    fprintf(stderr, "about to send play_sem\n");
+    xSemaphoreGive(play_sem);
     playing = true;
   }
   on_start = false;
@@ -475,7 +479,9 @@ void select(void) {
     // fprintf(stderr, "selectedsong = %c\n", list_of_songs[cursor]);
     // lcd_set_cursor(cursor % 2, strlen(list_of_songs[cursor]) + 1);
     // lcd_write_string(" <");
-    if (playing == false && on_start == false) {
+
+    if (paused) {
+      paused = false;
       xSemaphoreGive(play_sem);
     }
     xQueueSend(Q_songname, list_of_songs[cursor], portMAX_DELAY);
@@ -578,20 +584,29 @@ void testbuttons() {
   fprintf(stderr, "read bass: %x\n", temp);
 }
 
-// void song_control_task() {
-//   eTaskState status;
-//   status = eTaskGetState(xReader);
-//   if (xSemaphoreTake(play_sem, portMAX_DELAY)) {
-//     if (status == 1) {
-//       fprintf(stderr, "suspending song\n");
-//       vTaskSuspend(xReader);
-//     } else if (status == 3) {
-//       fprintf(stderr, "resuming song\n");
-//       vTaskResume(xReader);
-//     } else
-//       fprintf(stderr, "status: %d\n", status);
-//   }
-// }
+void song_control_task(void *p) {
+  fprintf(stderr, "in song_control\n");
+  // eTaskState status;
+  while (1) {
+    // status = eTaskGetState(xReader);
+    fprintf(stderr, "paused: %d", paused);
+    if (xSemaphoreTake(play_sem, 1000)) {
+      if (!paused) {
+        fprintf(stderr, "suspending song\n");
+        paused = true;
+        vTaskSuspend(xReader);
+      } else if (paused) {
+        fprintf(stderr, "resuming song\n");
+        paused = false;
+        vTaskResume(xReader);
+      } else {
+        fprintf(stderr, "pausing/playing failed\n");
+        fprintf(stderr, "status: %d\n", paused);
+      }
+    }
+    vTaskDelay(10);
+  }
+}
 
 void button_interrupt_task() {
   lcd_init();
@@ -679,7 +694,7 @@ void pin25_isr(void) { // select
   // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
 }
 
-void task2main(void) {
+void button_init(void) {
   //    port_pin_s gpio30 = {0,
   //                               30}; // struct used to set input from
   //                               gpio_lab.c
@@ -819,12 +834,12 @@ int main(void) {
   ssp0__set_max_clock(6000); // increase spi clock
 
   // isr test
-  task2main();
+  button_init();
 
   // reset();
   delay__ms(10);
   xTaskCreate(mp3_reader_task, "reader", (4096 / sizeof(void *)), NULL, 1,
-              xReader);
+              &xReader);
   xTaskCreate(mp3_player_task, "player", (4096 / sizeof(void *)), NULL, 2,
               NULL);
 
@@ -838,9 +853,8 @@ int main(void) {
               (4096 / sizeof(void *)), NULL, 3, NULL);
   // xTaskCreate(sj2_cli__init, "cli", (2048 / sizeof(void *)), NULL, 1,
   // NULL);
-  // xTaskCreate(song_control_task, "song_control", 4096 / sizeof(void *), NULL,
-  // 2,
-  //             NULL);
+  xTaskCreate(song_control_task, "song control", (4096 / sizeof(void *)), NULL,
+              3, NULL);
   fprintf(stderr, "about  write to volume\n");
   mp3write(0x0B, 0x20, 0x20);
   int tempvol = mp3read(0x0B);
