@@ -265,7 +265,7 @@ uint16_t bassreg = 0x0000;
 uint8_t bass = 0x00;
 uint8_t treble = 0x00;
 
-static songname_t options[4] = {"songs", "volume", "treble", "bass"};
+static song_memory_t options[4] = {"songs", "volume", "treble", "bass"};
 
 void buttonup(void) {
   if (in_main) {
@@ -470,6 +470,18 @@ unsigned int mp3read(unsigned char addressbyte) {
 }
 
 void lcd_task() {
+
+  /*
+  int index = 0;
+  lcd_init();
+  lcd_build_menu(&list_of_songs);
+  lcd_move_menu(&list_of_songs, 3, index++, 0);
+  vTaskDelay(1000);
+  lcd_move_menu(&list_of_songs, 3, index++, 0);
+  vTaskDelay(1000);
+  lcd_move_menu(&list_of_songs, 3, index++, 0);
+  vTaskDelay(1000);
+  */
 
   lcd_init();
   for (int i = 0; i < 4; i++) {
