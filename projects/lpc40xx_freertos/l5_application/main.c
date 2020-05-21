@@ -512,6 +512,7 @@ void select(void) {
     }
     selectedsong = cursor;
     fprintf(stderr, "selected_song index: %d", selectedsong);
+    lcd_now_playing(&list_of_songs, selectedsong);
     lcd_move_menu(&list_of_songs, 8, cursor, selectedsong);
     // fprintf(stderr, "selectedsong = %c\n", list_of_songs[cursor]);
     // lcd_set_cursor(cursor % 2, strlen(list_of_songs[cursor]) + 1);

@@ -144,6 +144,24 @@ void lcd_move_menu(song_memory_t *arr, int length, int current_cursor_index,
   }
 }
 
+void lcd_now_playing(song_memory_t *arr, int current_song_index) {
+  lcd_clear_display();
+  lcd_set_cursor(0, 0);
+  lcd_write_string("Now Playing");
+  lcd_set_cursor(1, 0);
+  lcd_write_string(arr[current_song_index]);
+  // vTaskDelay(1000);
+  // lcd_set_cursor(0, 0);
+  // lcd_write_string(arr[current_song_index]);
+  // lcd_set_cursor(1, 0);
+  // char * vtb;
+  // volume = -1 * (volume >> 4) + 15;
+  // bass = bass >> 1;
+  // treble
+  // snprinf(vtb, 16, "V: %d, T: %d B: %d", volume, treble, bass);
+  // lcd_write_string(vtb);
+}
+
 void write_8_bit_mode(uint8_t command, uint8_t rs_value) {
   // bool gpio__get(gpio_s gpio);
   // void gpio__set(gpio_s gpio);   ///< Sets the pin value as 'high' -> 3.3v
