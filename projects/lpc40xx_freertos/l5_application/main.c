@@ -40,12 +40,15 @@ SemaphoreHandle_t lcd_sem_down;
 SemaphoreHandle_t lcd_sem_play;
 SemaphoreHandle_t lcd_sem_back;
 SemaphoreHandle_t lcd_sem_select;
+//SemaphoreHandle_t skip_sem;
+//SemaphoreHandle_t previous_sem;
+//
 
 static QueueHandle_t sensor_data_queue;
 static EventGroupHandle_t xEventGroup;
 static EventBits_t uxBits;
 static volatile uint8_t slave_memory[256];
-clock_t start, end, dif;
+//clock_t start, end, dif;
 
 gpio_s sck, miso, mosi, dreq, mp3cs, sdcs, xdcs, rst, gpio30, gpio29, gpio01,
     gpio07, gpio09, gpio10, gpio25;
@@ -318,6 +321,37 @@ bool paused = false;
 
 static song_memory_t options[4] = {"songs", "volume", "treble", "bass"};
 
+//void skip(void){
+//    if (selectedsong != 8)
+//        selectedsong = selectedsong + 1;
+//    else if (selectedsong == -1){
+//        on_start = false;
+//        selectedsong = 0;
+//    }
+//    else
+//        selectedsong = 0;
+//    if(paused){
+//        xSemaphoreGive(play_sem);
+//    }
+//    xQueueSend(Q_songname, list_of_songs[selectedsong], portMAX_DELAY);
+//    playing = true;
+//
+//}
+//void previous(void){
+//    if (selectedsong != 0)
+//        selectedsong = selectedsong - 1;
+//    else if (selectedsong == -1){
+//        on_start = 0;
+//        selectedsong = 0;
+//    }
+//    else
+//        selectedsong = 8;
+//    if(paused){
+//        xSemaphoreGive(play_sem);
+//    }
+//    xQueueSend(Q_songname, list_of_songs[selectedsong], portMAX_DELAY);
+//    playing = true;
+//}
 void buttonup(void) {
   if (in_main) {
     if (adjust_volume || adjust_treble || adjust_bass) {
@@ -629,8 +663,16 @@ void button_interrupt_task() {
     } else if (xSemaphoreTake(lcd_sem_back, 1000)) {
       fprintf(stderr, "in main\n");
       back();
-    } else
-      fprintf(stderr, "aint doin shit\n");
+    }
+//    else if (xSemaphoreTake(skip_sem, 1000)){
+//        fprintf(stderr, "in skip\n");
+//        skip();
+//    } else if (xSemaphoreTake(previous_sem, 1000)){
+//        fprintf(stderr, "in previous\n");
+//        previous();
+//    }
+    else
+      fprintf(stderr, "button idling\n");
   }
 }
 
@@ -653,29 +695,45 @@ void button_interrupt_task() {
 void pin01_isr(void) { // lcd_sem_down
   // uart_printf__polled(UART__0, "P0.30");
   // delay__ms(100);
-  uart_printf__polled(UART__0, "in handler 01\n");
-  xSemaphoreGiveFromISR(lcd_sem_down, NULL);
-
+//  start = clock();
+//    while (!gpio__get(gpio09)) {
+//        ;
+//    }
+//    end = clock();
+//    dif = end - start;
+//    printf("%d elapsed\n");
+//    if(dif > 1000000){
+//        xSemaphoreGiveFromISR(previous_sem);
+//    }
+//    else
+        xSemaphoreGiveFromISR(lcd_sem_down, NULL);
+    uart_printf__polled(UART__0, "in handler 01\n");
   // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
 }
 void pin07_isr(void) { // lcd_sem_up
   // uart_printf__polled(UART__0, "P0.30");
   // delay__ms(100);
-  start = clock();
-  while (!gpio__get(gpio07)) {
-    ;
-  }
-  end = clock();
-  dif = end - start;
-  printf("%d elapsed\n");
+//  start = clock();
+//  while (!gpio__get(gpio07)) {
+//    ;
+//  }
+//  end = clock();
+//  dif = end - start;
+//  printf("%d elapsed\n");
+//  if(dif > 1000000){
+//      xSemaphoreGiveFromISR(skip_sem);
+//  }
+//  else
+      xSemaphoreGiveFromISR(lcd_sem_up, NULL);
   uart_printf__polled(UART__0, "in handler 01\n");
-  xSemaphoreGiveFromISR(lcd_sem_up, NULL);
+
 
   // lcd_move_menu(&list_of_songs, 3, 1, 0); // down
 }
 void pin09_isr(void) { // play
   // uart_printf__polled(UART__0, "P0.30");
   // delay__ms(100);
+
   uart_printf__polled(UART__0, "in handler 01\n");
   xSemaphoreGiveFromISR(lcd_sem_play, NULL);
 
@@ -752,6 +810,8 @@ int main(void) {
   lcd_sem_back = xSemaphoreCreateBinary();
   play_sem = xSemaphoreCreateBinary();
   spi_sem = xSemaphoreCreateMutex();
+//  skip_sem = xSemaphoreCreateBinary();
+//  previous_sem = xSemaphoreCreateBinary();
   // player_sem = xSemaphoreCreateMutex();
 
   printf("in main\n");
